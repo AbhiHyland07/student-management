@@ -41,4 +41,13 @@ public class Student extends User {
     public void setRole(){
         this.role = Role.STUDENT;
     }
+
+    @Override
+    public String toString() {
+        return "Student{" +
+                "id='" + id + '\'' +
+                ", courses=" + courses +
+                ", role=" + role +
+                '}';
+    }
 }

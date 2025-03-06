@@ -24,14 +24,14 @@ public class StudentController {
         return ResponseEntity.ok(studentService.addStudent((Student) student));
     }
 
-    @PreAuthorize("#username == authentication.principal.username  or hasAuthority('ADMIN')")
+    @PreAuthorize("#username == authentication.principal.username  or hasAuthority('ADMIN') ")
     @PutMapping("/register/{username}/{id}")
     public ResponseEntity<?> addCourse(@PathVariable(name = "username") String username,
                              @PathVariable(name = "id") String courseId){
         return ResponseEntity.ok(studentService.updateCourse(username,courseId));
     }
 
-    @PreAuthorize("#username == authentication.principal.username  or hasAuthority('ADMIN')")
+    @PreAuthorize("#username == authentication.principal.username  or hasAuthority('ADMIN') or hasAuthority('TEACHER')")
     @GetMapping("/{username}")
     public ResponseEntity<?> getStudent(@PathVariable(name = "username") String username){
         return ResponseEntity.ok(studentService.getStudent(username));
