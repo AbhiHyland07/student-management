@@ -4,6 +4,7 @@ import com.example.demo.exception.model.ResourceAlreadyPresent;
 import com.example.demo.exception.model.ResourceNotFound;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
@@ -23,5 +24,11 @@ public class ExceptionHandling {
     public ResponseEntity<ApiResponse> handleRuntimeException(RuntimeException ex) {
         ApiResponse response = new ApiResponse(false, ex.getMessage(),ex.getClass().getSimpleName());
             return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler({AccessDeniedException.class})
+    public ResponseEntity<ApiResponse> handleAccessDeniedException(RuntimeException ex) {
+        ApiResponse response = new ApiResponse(false, ex.getMessage(),ex.getClass().getSimpleName());
+        return new ResponseEntity<>(response, HttpStatus.FORBIDDEN);
     }
 }

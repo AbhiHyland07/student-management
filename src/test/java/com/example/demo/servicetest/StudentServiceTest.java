@@ -7,6 +7,7 @@ import com.example.demo.model.modelDTO.CourseDTO;
 import com.example.demo.model.modelDTO.StudentDTO;
 import com.example.demo.repository.CourseRepository;
 import com.example.demo.repository.StudentRepository;
+import com.example.demo.repository.TeacherRepository;
 import com.example.demo.repository.UserRepository;
 import com.example.demo.service.serviceImpl.CourseServiceImpl;
 import com.example.demo.service.serviceImpl.StudentServiceImpl;
@@ -38,6 +39,9 @@ public class StudentServiceTest {
     @Mock
     private UserRepository userRepo;
 
+    @Mock
+    private TeacherRepository teacherRepo;
+
     @InjectMocks
     private StudentServiceImpl service;
 
@@ -57,7 +61,7 @@ public class StudentServiceTest {
         courses.setCourseId("2");
         courses.setName("Course");
         courses.setDescription("Course2");
-        service = new StudentServiceImpl(studentRepo,courseRepo,encoder,userRepo);
+        service = new StudentServiceImpl(studentRepo,courseRepo,encoder,userRepo,teacherRepo);
     }
     @Test
     public void testGetUserByUsername() {

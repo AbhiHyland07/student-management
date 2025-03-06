@@ -4,14 +4,19 @@ import com.example.demo.exception.model.ResourceAlreadyPresent;
 import com.example.demo.exception.model.ResourceNotFound;
 import com.example.demo.model.Courses;
 import com.example.demo.model.Student;
+import com.example.demo.model.Teacher;
 import com.example.demo.model.UserName;
 import com.example.demo.model.modelDTO.StudentDTO;
 import com.example.demo.repository.CourseRepository;
 import com.example.demo.repository.StudentRepository;
+import com.example.demo.repository.TeacherRepository;
 import com.example.demo.repository.UserRepository;
 import com.example.demo.service.StudentService;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -27,13 +32,16 @@ public class StudentServiceImpl implements StudentService {
     private final ModelMapper mapper = new ModelMapper();
     private final PasswordEncoder encoder;
     private final UserRepository userRepository;
+    private final TeacherRepository teacherRepository;
     @Autowired
     public StudentServiceImpl(StudentRepository studentRepository, CourseRepository repository,
-                              PasswordEncoder encoder, UserRepository userRepository) {
+                              PasswordEncoder encoder, UserRepository userRepository,
+                              TeacherRepository teacherRepository) {
         this.studentRepository = studentRepository;
         this.repository = repository;
         this.encoder = encoder;
         this.userRepository = userRepository;
+        this.teacherRepository = teacherRepository;
     }
 
     @Override
@@ -75,8 +83,18 @@ public class StudentServiceImpl implements StudentService {
 
     @Override
     public StudentDTO getStudent(String username) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String name = authentication.getName();
         Student studentDetails = studentRepository.findByUsername(username)
                                                   .orElseThrow(()->new ResourceNotFound("No student with username "+username+" is present"));
+        Optional<Teacher> teacherOptional = teacherRepository.findByUsername(name);
+        if (teacherOptional.isPresent()){
+            Teacher teacher = teacherOptional.get();
+            if (studentDetails.getCourses().stream().
+                    noneMatch((c)->c.getCourseId().equals(teacher.getCourses().getCourseId()))){
+                throw new AccessDeniedException("Access is Denied");
+            }
+        }
 
         return mapper.map(studentDetails,StudentDTO.class);
     }
