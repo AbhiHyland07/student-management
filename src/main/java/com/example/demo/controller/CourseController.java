@@ -75,6 +75,7 @@ public class CourseController {
     @PreAuthorize("hasAuthority('ADMIN')")
     @PutMapping("/{id}")
     public ResponseEntity<?> updateCourse(@PathVariable String id, @RequestBody Courses courses){
+        System.out.println();
         return ResponseEntity.ok(courseService.updateCourse(id,courses));
     }
 }
