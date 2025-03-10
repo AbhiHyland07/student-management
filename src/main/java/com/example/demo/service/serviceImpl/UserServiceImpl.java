@@ -26,6 +26,7 @@ public class UserServiceImpl implements UserService {
         this.jwtTokenUtil = jwtTokenUtil;
         this.userAuthentication = userAuthentication;
         this.authenticationManager = authenticationManager;
+
     }
     @Override
     public AuthenticationResponse authenticateUser(AuthenticationRequest authenticationRequest, HttpServletResponse response, HttpServletRequest request) {
