@@ -22,7 +22,7 @@ jobs:
         uses: actions/setup-java@v2
         with:
           java-version: '21'  # Set to JDK 21
-          distribution: 'oracleopenjdk'
+          distribution: 'zulu'
 
 
       - name: Run tests with Maven
