@@ -28,3 +28,8 @@ jobs:
       - name: Run tests with Maven
         run: mvn clean test
 
+      - name: Upload test results
+        uses: actions/upload-artifact@v2
+        with:
+          name: test-results
+          path: target/test-classes  # Adjust path to your test reports
