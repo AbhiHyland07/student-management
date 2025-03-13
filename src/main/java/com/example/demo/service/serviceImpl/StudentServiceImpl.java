@@ -15,7 +15,6 @@ import com.example.demo.service.StudentService;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.AccessDeniedException;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -83,11 +82,9 @@ public class StudentServiceImpl implements StudentService {
 
     @Override
     public StudentDTO getStudent(String username) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String name = authentication.getName();
         Student studentDetails = studentRepository.findByUsername(username)
                                                   .orElseThrow(()->new ResourceNotFound("No student with username "+username+" is present"));
-        Optional<Teacher> teacherOptional = teacherRepository.findByUsername(name);
+        Optional<Teacher> teacherOptional = teacherRepository.findByUsername(SecurityContextHolder.getContext().getAuthentication().getName());
         if (teacherOptional.isPresent()){
             Teacher teacher = teacherOptional.get();
             if (studentDetails.getCourses().stream().
