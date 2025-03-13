@@ -23,26 +23,7 @@ jobs:
         with:
           java-version: '21'  # Set to JDK 21
 
-      - name: List files in target directory
-        run: ls -al ./target  # Verify that the .jar file exists
 
-      - name: Upload artifact for deployment job
-        uses: actions/upload-artifact@v2
-        with:
-          name: java-app
-          path: './target/*.jar'  # Adjust this path based on your generated files
+      - name: Run tests with Maven
+        run: mvn clean test
 
-
-      # Step 4: Build and run tests with Maven
-      - name: Build and run tests with Maven
-        run: mvn clean install -DskipTests=false  # Run Maven build and tests
-
-
-
-      # Step 5 (Optional): Upload test results if necessary
-      - name: Upload test results
-        if: always()  # Ensure upload happens even if tests fail
-        uses: actions/upload-artifact@v2
-        with:
-          name: test-results
-          path: target/test-logs  # Path to test logs (adjust as needed)
