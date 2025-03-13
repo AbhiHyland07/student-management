@@ -1,41 +1,40 @@
-name: Run Spring Boot Tests on macOS
 
+
+name: Run Spring Boot Tests on macOS
 on:
   push:
     branches:
-      - master  # Trigger when pushing to the main branch (or any other branch of your choice)
-  pull_request:
-    branches:
-      - master  # Trigger on pull requests to the main branch
+      - master
+
+
 
 jobs:
-  test:
-    runs-on: macos-latest  # This specifies the macOS runner
-
+  build:
+    runs-on: macos-latest
     steps:
-      - name: Checkout code
+      - name: Check out code
         uses: actions/checkout@v2
+
+
 
       - name: Set up JDK 21
         uses: actions/setup-java@v2
+
         with:
-          java-version: '21'  # Set Java version for your Spring Boot project
+          java-version: '21'
 
-      - name: Cache Maven dependencies
-        uses: actions/cache@v2
-        with:
-          path: ~/.m2/repository  # Cache Maven dependencies to speed up builds
-          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
-          restore-keys: |
-            ${{ runner.os }}-maven-
+      - name: Build with Maven
+        run: mvn clean install
 
-      - name: Build and test with Maven
-        run: mvn clean install -DskipTests=false  # Run tests using Maven (adjust for your needs)
-
-      # Optional: Upload test results (JUnit XML or other formats)
-      - name: Upload test results
-        if: always()  # Run this even if tests fail
+      - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v2
         with:
-          name: test-results
-          path: target/test-logs  # Path to test logs or reports
+          name: java-app
+          path: '~/Downloads/demo/target/*.jar'
+
+
+
+      - name: Run Tests
+        run: mvn test
+
+
