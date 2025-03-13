@@ -3,10 +3,10 @@ name: Run Spring Boot Tests on macOS
 on:
   push:
     branches:
-      - main  # Trigger when pushing to the main branch (or any other branch of your choice)
+      - master  # Trigger when pushing to the main branch (or any other branch of your choice)
   pull_request:
     branches:
-      - main  # Trigger on pull requests to the main branch
+      - master  # Trigger on pull requests to the main branch
 
 jobs:
   test:
