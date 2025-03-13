@@ -23,6 +23,10 @@ jobs:
         with:
           java-version: '21'  # Set to JDK 21
 
+      # Step 4: Build and run tests with Maven
+      - name: Build and run tests with Maven
+        run: mvn clean install -DskipTests=false  # Run Maven build and tests
+
       # Step 3: Cache Maven dependencies
       - name: Cache Maven dependencies
         uses: actions/cache@v2
@@ -31,10 +35,6 @@ jobs:
           key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}  # Create a cache key based on the pom.xml file
           restore-keys: |
             ${{ runner.os }}-maven-
-
-      # Step 4: Build and run tests with Maven
-      - name: Build and run tests with Maven
-        run: mvn clean install -DskipTests=false  # Run Maven build and tests
 
       # Step 5 (Optional): Upload test results if necessary
       - name: Upload test results
