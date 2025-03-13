@@ -30,7 +30,7 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: java-app
-          path: '~/Downloads/demo/target/*.jar'
+          path: '${{ github.workspace }}/target/*.jar'
 
 
 
