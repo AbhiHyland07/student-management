@@ -24,6 +24,13 @@ jobs:
           java-version: '21'  # Set to JDK 21
           distribution: 'zulu'
 
+      - name: Cache Maven dependencies
+        uses: actions/cache@v2
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
 
       - name: Run tests with Maven
         run: mvn clean test
