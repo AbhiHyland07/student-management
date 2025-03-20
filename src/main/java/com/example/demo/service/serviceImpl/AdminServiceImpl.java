@@ -32,7 +32,7 @@ public class AdminServiceImpl implements AdminService {
     public Admin addAdmin(Admin admin) {
         Optional<UserName> userNameOptional = userRepository.findByUsername(admin.getUsername());
         if (userNameOptional.isPresent()){
-            throw new ResourceAlreadyPresent("The username with "+userNameOptional.get().getUsername()+" is present");
+            throw new ResourceAlreadyPresent("The username with "+userNameOptional.get().getUsername()+" is present ");
         }
         admin.setPassword(encoder.encode(admin.getPassword()));
         UserName userName = new UserName();
