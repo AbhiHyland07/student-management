@@ -1,40 +1,41 @@
 package com.example.demo.model.authentication;
 
-public class AuthenticationRequest  {
-    private String email;
-    private String password;
+public class AuthenticationRequest {
+  private String email;
+  private String password;
 
-    private Boolean rememberMe;
+  private Boolean rememberMe;
 
-    public AuthenticationRequest(String email, String password, Boolean rememberMe) {
-        this.email = email;
-        this.password = password;
-        this.rememberMe = rememberMe;
-    }
-    public AuthenticationRequest() {
-    }
+  public AuthenticationRequest(String email, String password, Boolean rememberMe) {
+    this.email = email;
+    this.password = password;
+    this.rememberMe = rememberMe;
+  }
 
-    public String getEmail() {
-        return email;
-    }
+  public AuthenticationRequest() {
+  }
 
-    public void setEmail(String email) {
-        this.email = email;
-    }
+  public String getEmail() {
+    return email;
+  }
 
-    public String getPassword() {
-        return password;
-    }
+  public void setEmail(String email) {
+    this.email = email;
+  }
 
-    public void setPassword(String password) {
-        this.password = password;
-    }
+  public String getPassword() {
+    return password;
+  }
 
-    public Boolean getRememberMe() {
-        return rememberMe;
-    }
+  public void setPassword(String password) {
+    this.password = password;
+  }
 
-    public void setRememberMe(Boolean rememberMe) {
-        this.rememberMe = rememberMe;
-    }
+  public Boolean getRememberMe() {
+    return rememberMe;
+  }
+
+  public void setRememberMe(Boolean rememberMe) {
+    this.rememberMe = rememberMe;
+  }
 }

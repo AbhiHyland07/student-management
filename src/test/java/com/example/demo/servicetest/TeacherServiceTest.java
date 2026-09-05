@@ -26,45 +26,45 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 public class TeacherServiceTest {
 
-    @Mock
-    private TeacherRepository teacherRepository;
+  @Mock
+  private TeacherRepository teacherRepository;
 
-    @Mock
-    private UserRepository userRepo;
+  @Mock
+  private UserRepository userRepo;
 
-    @Mock
-    private CourseRepository courseRepo;
+  @Mock
+  private CourseRepository courseRepo;
 
-    @InjectMocks
-    private TeacherServiceImpl teacherService;
+  @InjectMocks
+  private TeacherServiceImpl teacherService;
 
-    @InjectMocks
-    private CourseServiceImpl courseService;
+  @InjectMocks
+  private CourseServiceImpl courseService;
 
-    private Teacher teacher;
-    private final PasswordEncoder encoder = new BCryptPasswordEncoder();
-    private Courses courses;
+  private Teacher teacher;
+  private final PasswordEncoder encoder = new BCryptPasswordEncoder();
+  private Courses courses;
 
-    @BeforeEach
-    public void setUp(){
-        teacher = new Teacher("abhi07","Hello","Abhigyan");
-        teacher.setPassword(encoder.encode("Hello"));
-        courses = new Courses();
-        courses.setCourseId("2");
-        courses.setName("Course");
-        courses.setDescription("Course2");
-        teacherService = new TeacherServiceImpl(teacherRepository,courseRepo,encoder,userRepo);
-    }
+  @BeforeEach
+  public void setUp() {
+    teacher = new Teacher("abhi07", "Hello", "Abhigyan");
+    teacher.setPassword(encoder.encode("Hello"));
+    courses = new Courses();
+    courses.setCourseId("2");
+    courses.setName("Course");
+    courses.setDescription("Course2");
+    teacherService = new TeacherServiceImpl(teacherRepository, courseRepo, encoder, userRepo);
+  }
 
-    @Test
-    public void addStudent(){
-        when(userRepo.findByUsername("abhi07")).thenReturn(Optional.empty());
-        when(teacherRepository.save(teacher)).thenReturn(teacher);
-        when(courseRepo.findByCourseId("2")).thenReturn(Optional.ofNullable(courses));
-        TeacherDTO savedTeacher = teacherService.addTeacher(teacher,"2");
-        assertNotNull(savedTeacher);
-        assertEquals("abhi07", savedTeacher.getUsername());
-        assertEquals("2",savedTeacher.getCourses().getCourseId());
-        assertEquals("2",savedTeacher.getCourses().getCourseId());
-    }
+  @Test
+  public void addStudent() {
+    when(userRepo.findByUsername("abhi07")).thenReturn(Optional.empty());
+    when(teacherRepository.save(teacher)).thenReturn(teacher);
+    when(courseRepo.findByCourseId("2")).thenReturn(Optional.ofNullable(courses));
+    TeacherDTO savedTeacher = teacherService.addTeacher(teacher, "2");
+    assertNotNull(savedTeacher);
+    assertEquals("abhi07", savedTeacher.getUsername());
+    assertEquals("2", savedTeacher.getCourses().getCourseId());
+    assertEquals("2", savedTeacher.getCourses().getCourseId());
+  }
 }

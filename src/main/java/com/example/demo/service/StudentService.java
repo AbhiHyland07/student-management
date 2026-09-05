@@ -5,9 +5,9 @@ import com.example.demo.model.Student;
 import com.example.demo.model.modelDTO.StudentDTO;
 
 public interface StudentService {
-    StudentDTO addStudent(Student student);
+  StudentDTO addStudent(Student student);
 
-    StudentDTO updateCourse(String username, String courseId);
+  StudentDTO updateCourse(String username, String courseId);
 
-    StudentDTO getStudent(String username);
+  StudentDTO getStudent(String username);
 }
