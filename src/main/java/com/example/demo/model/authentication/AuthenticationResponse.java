@@ -1,12 +1,13 @@
 package com.example.demo.model.authentication;
 
-public class AuthenticationResponse  {
-    private final String jwt;
-    public AuthenticationResponse(String jwt) {
-        this.jwt = jwt;
-    }
+public class AuthenticationResponse {
+  private final String jwt;
 
-    public String getJwt() {
-        return jwt;
-    }
+  public AuthenticationResponse(String jwt) {
+    this.jwt = jwt;
+  }
+
+  public String getJwt() {
+    return jwt;
+  }
 }

@@ -32,3 +32,29 @@ build/
 ### VS Code ###
 .vscode/
 .mvn/
+
+# Keep repository files trackable while ignoring any other untracked files.
+/*
+!/.gitattributes
+!/.github/
+!/.gitignore
+!/.mvn/
+!/.eclipse-java-google-style.xml
+!/.pre-commit-config.yaml
+!/README.md
+!/mvnw
+!/mvnw.cmd
+!/pom.xml
+!/src/
+
+/.github/*
+!/.github/**/
+!/.github/**
+
+/.mvn/*
+!/.mvn/**/
+!/.mvn/**
+
+/src/*
+!/src/**/
+!/src/**

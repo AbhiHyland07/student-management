@@ -20,37 +20,39 @@ import java.util.Optional;
 @Service
 public class TeacherServiceImpl implements TeacherService {
 
-    private final TeacherRepository teacherRepository;
-    private final CourseRepository repository;
-    private final ModelMapper mapper = new ModelMapper();
-    private final PasswordEncoder encoder;
-    private final UserRepository userRepository;
+  private final TeacherRepository teacherRepository;
+  private final CourseRepository repository;
+  private final ModelMapper mapper = new ModelMapper();
+  private final PasswordEncoder encoder;
+  private final UserRepository userRepository;
 
-    @Autowired
-    public TeacherServiceImpl(TeacherRepository teacherRepository, CourseRepository repository,
-                              PasswordEncoder encoder, UserRepository userRepository){
-        this.teacherRepository = teacherRepository;
-        this.repository = repository;
-        this.encoder = encoder;
-        this.userRepository = userRepository;
-    }
-    @Override
-    public TeacherDTO addTeacher(Teacher teacher, String id) {
-        Optional<UserName> userNameOptional = userRepository.findByUsername(teacher.getUsername());
-        if (userNameOptional.isPresent()){
-            throw new ResourceAlreadyPresent("The username "+userNameOptional.get().getUsername()+" is present");
-        }
+  @Autowired
+  public TeacherServiceImpl(TeacherRepository teacherRepository, CourseRepository repository,
+          PasswordEncoder encoder, UserRepository userRepository) {
+    this.teacherRepository = teacherRepository;
+    this.repository = repository;
+    this.encoder = encoder;
+    this.userRepository = userRepository;
+  }
 
-        Optional<Courses> courses = repository.findByCourseId(id);
-        if (courses.isEmpty()){
-            throw new ResourceNotFound("No course with courseId "+id+" is present");
-        }
-        teacher.setCourses(courses.get());
-        teacher.setPassword(encoder.encode(teacher.getPassword()));
-        UserName userName = new UserName();
-        userName.setUsername(teacher.getUsername());
-        userRepository.save(userName);
-        teacherRepository.save(teacher);
-        return mapper.map(teacher,TeacherDTO.class);
+  @Override
+  public TeacherDTO addTeacher(Teacher teacher, String id) {
+    Optional<UserName> userNameOptional = userRepository.findByUsername(teacher.getUsername());
+    if (userNameOptional.isPresent()) {
+      throw new ResourceAlreadyPresent(
+              "The username " + userNameOptional.get().getUsername() + " is present");
     }
+
+    Optional<Courses> courses = repository.findByCourseId(id);
+    if (courses.isEmpty()) {
+      throw new ResourceNotFound("No course with courseId " + id + " is present");
+    }
+    teacher.setCourses(courses.get());
+    teacher.setPassword(encoder.encode(teacher.getPassword()));
+    UserName userName = new UserName();
+    userName.setUsername(teacher.getUsername());
+    userRepository.save(userName);
+    teacherRepository.save(teacher);
+    return mapper.map(teacher, TeacherDTO.class);
+  }
 }

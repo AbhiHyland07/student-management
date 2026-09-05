@@ -21,32 +21,32 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 public class AdminServiceTest {
-    @Mock
-    private AdminRepository adminRepository;
+  @Mock
+  private AdminRepository adminRepository;
 
-    @Mock
-    private UserRepository userRepo;
+  @Mock
+  private UserRepository userRepo;
 
-    @InjectMocks
-    private AdminServiceImpl adminService;
+  @InjectMocks
+  private AdminServiceImpl adminService;
 
-    private Admin admin;
-    private final PasswordEncoder encoder = new BCryptPasswordEncoder();
+  private Admin admin;
+  private final PasswordEncoder encoder = new BCryptPasswordEncoder();
 
-    @BeforeEach
-    public void setUp(){
-        admin = new Admin();
-        admin.setPassword("Hello");
-        admin.setUsername("abhi07");
-        adminService = new AdminServiceImpl(adminRepository,encoder,userRepo);
-    }
+  @BeforeEach
+  public void setUp() {
+    admin = new Admin();
+    admin.setPassword("Hello");
+    admin.setUsername("abhi07");
+    adminService = new AdminServiceImpl(adminRepository, encoder, userRepo);
+  }
 
-    @Test
-    public void addAdmin(){
-        when(userRepo.findByUsername("abhi07")).thenReturn(Optional.empty());
-        when(adminRepository.save(admin)).thenReturn(admin);
-        Admin admin1 = adminService.addAdmin(admin);
-        assertNotNull(admin1);
-        assertEquals("abhi07", admin1.getUsername());
-    }
+  @Test
+  public void addAdmin() {
+    when(userRepo.findByUsername("abhi07")).thenReturn(Optional.empty());
+    when(adminRepository.save(admin)).thenReturn(admin);
+    Admin admin1 = adminService.addAdmin(admin);
+    assertNotNull(admin1);
+    assertEquals("abhi07", admin1.getUsername());
+  }
 }
