@@ -8,7 +8,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
-import org.springframework.security.config.annotation.authentication.configuration.EnableGlobalAuthentication;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -22,43 +21,47 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
+public class SpringSecurityConfig {
+  private final JwtRequestFilter jwtRequestFilter;
 
-public class SpringSecurityConfig  {
-    private final JwtRequestFilter jwtRequestFilter;
+  @Autowired
+  public SpringSecurityConfig(JwtRequestFilter jwtRequestFilter) {
+    this.jwtRequestFilter = jwtRequestFilter;
+  }
 
-    @Autowired
-    public SpringSecurityConfig(JwtRequestFilter jwtRequestFilter) {
-        this.jwtRequestFilter = jwtRequestFilter;
-    }
+  @Bean
+  public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    http.csrf(AbstractHttpConfigurer::disable)
+        .sessionManagement(
+            session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+        .authorizeHttpRequests(
+            auth ->
+                auth.requestMatchers(
+                        "/login",
+                        "/logout",
+                        "/swagger-ui.html",
+                        "/v3/api-docs/**",
+                        "/swagger-ui/**")
+                    .permitAll()
+                    .requestMatchers("/api/admin")
+                    .hasAuthority(Role.ADMIN.name())
+                    .anyRequest()
+                    .authenticated());
+    http.cors(Customizer.withDefaults());
 
-    @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http.csrf(AbstractHttpConfigurer::disable)
-                .sessionManagement(session
-                        -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authorizeHttpRequests(auth
-                        -> auth.requestMatchers("/login", "/logout","/swagger-ui.html","/v3/api-docs/**", "/swagger-ui/**").permitAll()
-                        .requestMatchers("/api/admin").hasAuthority(Role.ADMIN.name())
-                        .anyRequest()
-                        .authenticated());
-        http.cors(Customizer.withDefaults());
+    http.addFilterBefore(this.jwtRequestFilter, UsernamePasswordAuthenticationFilter.class);
 
+    return http.build();
+  }
 
-        http.addFilterBefore(
-                this.jwtRequestFilter, UsernamePasswordAuthenticationFilter.class);
+  @Bean
+  public AuthenticationManager authenticationManager(
+      AuthenticationConfiguration authenticationConfiguration) throws Exception {
+    return authenticationConfiguration.getAuthenticationManager();
+  }
 
-        return http.build();
-    }
-
-    @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {
-        return authenticationConfiguration.getAuthenticationManager();
-    }
-
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
+  @Bean
+  public PasswordEncoder passwordEncoder() {
+    return new BCryptPasswordEncoder();
+  }
 }
-
-

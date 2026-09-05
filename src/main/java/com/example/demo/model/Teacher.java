@@ -7,45 +7,40 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @Document(collection = "teacher")
 public class Teacher extends User {
 
-    @Id
-    private String id;
-    private Role role = Role.TEACHER;
-    private Courses courses;
+  @Id private String id;
+  private Role role = Role.TEACHER;
+  private Courses courses;
 
-    public Teacher(String username, String password, String name) {
-        super(username, password, name);
-    }
+  public Teacher(String username, String password, String name) {
+    super(username, password, name);
+  }
 
-    public String getId() {
-        return id;
-    }
+  public String getId() {
+    return id;
+  }
 
-    public void setId(String id) {
-        this.id = id;
-    }
+  public void setId(String id) {
+    this.id = id;
+  }
 
-    public Role getRole() {
-        return role;
-    }
+  public Role getRole() {
+    return role;
+  }
 
-    public Courses getCourses() {
-        return courses;
-    }
+  public Courses getCourses() {
+    return courses;
+  }
 
-    public void setCourses(Courses courses) {
-        this.courses = courses;
-    }
+  public void setCourses(Courses courses) {
+    this.courses = courses;
+  }
 
-    public void setRole(){
-        this.role = Role.TEACHER;
-    }
+  public void setRole() {
+    this.role = Role.TEACHER;
+  }
 
-    @Override
-    public String toString() {
-        return "Teacher{" +
-                "id='" + id + '\'' +
-                ", role=" + role +
-                ", courses=" + courses +
-                '}';
-    }
+  @Override
+  public String toString() {
+    return "Teacher{" + "id='" + id + '\'' + ", role=" + role + ", courses=" + courses + '}';
+  }
 }

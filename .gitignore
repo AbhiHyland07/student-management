@@ -32,3 +32,34 @@ build/
 ### VS Code ###
 .vscode/
 .mvn/
+.env
+
+# Ignore any untracked files by default, but keep current repo files trackable.
+/*
+!/.gitattributes
+!/.github/
+!/.gitignore
+!/.mvn/
+!/Dockerfile
+!/HELP.md
+!/README.md
+!/docker-compose.yml
+!/mvnw
+!/mvnw.cmd
+!/pom.xml
+!/src/
+!/target/
+
+/.github/*
+!/.github/**/
+!/.github/**
+
+/.mvn/*
+!/.mvn/**/
+!/.mvn/**
+
+/src/*
+!/src/**/
+!/src/**
+
+/target/*
