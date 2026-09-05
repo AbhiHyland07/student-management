@@ -5,8 +5,12 @@ on:
     branches:
       - master  # Trigger on push to the main branch, change if needed
   pull_request:
+    types: [opened, synchronize, reopened]
     branches:
       - master  # Trigger on pull request to the main branch
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref_name }}
+  cancel-in-progress: true
 
 jobs:
   test:
@@ -15,17 +19,19 @@ jobs:
     steps:
       # Step 1: Checkout the code
       - name: Checkout code
-        uses: actions/checkout@v3
-
-      # Step 2: Set up JDK 21
-      - name: Set up JDK 21
-        uses: actions/setup-java@v3
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          java-version: '21'  # Set to JDK 21
-          distribution: 'zulu'
+          fetch-depth: 0
+
+      # Step 2: Set up JDK 25
+      - name: Set up JDK 25
+        uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5.7.0
+        with:
+          java-version: '25'
+          distribution: 'corretto'
 
       - name: Cache Maven dependencies
-        uses: actions/cache@v3
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.m2/repository
           key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
@@ -33,14 +39,5 @@ jobs:
             ${{ runner.os }}-maven-
 
       - name: Run tests with Maven
-        run: mvn clean test
-  deploy:
-    runs-on: macos-latest
-    needs: test  # This job will only run after the 'test' job finishes
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      - name: Deploy to AWS
-        run: aws s3 cp ./build/ s3://your-bucket-name/ --recursive
+        run: mvn clean install
 

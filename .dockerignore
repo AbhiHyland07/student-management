@@ -1,0 +1,9 @@
+# Prevent macOS metadata/resource-fork files from breaking Docker context transfer
+# macOS metadata
+.DS_Store
+._*
+.AppleDouble
+.LSOverride
+
+# resource forks / xattrs artifacts
+*.icloud
