@@ -4,7 +4,7 @@ This document provides detailed API documentation for the **Student Management S
 
 ## Technologies Used
 
-- **Java 21**
+- **Java 25**
 - **Spring Boot** 3.5+
 - **Spring Security** for Role-based Authentication and JWT Token
 - **Spring Data MongoDB** for database access
@@ -236,7 +236,7 @@ Login to the system.
 
 Before you begin, ensure you have met the following requirements:
 
-- **Java 21** or later
+- **Java 25** or later
 - **Maven** or **Gradle** for building the project
 - An IDE such as **IntelliJ IDEA**, **Eclipse**, or **VS Code**
 
