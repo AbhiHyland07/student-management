@@ -14,6 +14,7 @@ concurrency:
 
 jobs:
   branch-name-check:
+    if: ${{ github.event_name == 'pull_request' }}
     runs-on: ubuntu-latest
 
     steps:
@@ -27,6 +28,7 @@ jobs:
           fi
 
   commit-message-check:
+    if: ${{ github.event_name == 'pull_request' }}
     runs-on: ubuntu-latest
 
     steps:
