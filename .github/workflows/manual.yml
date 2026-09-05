@@ -69,9 +69,6 @@ jobs:
           fi
 
   test:
-    needs:
-      - branch-name-check
-      - commit-message-check
     runs-on: macos-latest  # macOS runner
 
     steps:
@@ -98,3 +95,53 @@ jobs:
 
       - name: Run tests with Maven
         run: mvn clean install
+
+  docker-image:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4 # pinned via release tag
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Install GitVersion
+        uses: gittools/actions/gitversion/setup@v3.2.0 # pinned via release tag
+        with:
+          versionSpec: '6.0.x'
+
+      - name: Determine version
+        id: gitversion
+        uses: gittools/actions/gitversion/execute@v3.2.0 # pinned via release tag
+        with:
+          useConfigFile: true
+          configFilePath: GitVersion.yml
+
+      - name: Set image version
+        run: echo "IMAGE_VERSION=${{ env.GitVersion_FullSemVer }}" >> "$GITHUB_ENV"
+
+      - name: Build docker image
+        run: |
+          docker build -t app-jvm-${IMAGE_VERSION} .
+
+      - name: Run docker image
+        run: |
+          container_id="$(docker run -d -p 8080:8080 app-jvm-${IMAGE_VERSION})"
+          trap 'docker rm -f "$container_id"' EXIT
+
+          for _ in {1..30}; do
+            if curl -fsS http://localhost:8080/actuator/health >/dev/null 2>&1 || curl -fsS http://localhost:8080 >/dev/null 2>&1; then
+              echo "Application is running."
+              exit 0
+            fi
+            sleep 5
+          done
+
+          echo "Application did not become ready."
+          docker logs "$container_id"
+          exit 1

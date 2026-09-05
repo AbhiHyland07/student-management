@@ -1,0 +1,9 @@
+mode: ContinuousDeployment
+next-version: 1.0.124
+increment: Patch
+assembly-informational-format: '{Major}.{Minor}.{Patch}.{env:BUILD_NUMBER ?? 0}-{ShortSha}'
+
+branches:
+  main:
+    regex: ^master$
+    label: ''
