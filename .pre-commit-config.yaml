@@ -1,9 +1,78 @@
 repos:
+
   - repo: local
     hooks:
-      - id: spotless-apply
-        name: spotless-apply
-        entry: ./mvnw spotless:apply
+      - id: git-commit-msg-convention
+        name: "Check for commit message convention"
+        language: pygrep
+        entry: '\A(?!(HXCS|CICGOV)-[0-9]+(\ )*[A-Za-z0-9_-]+)'
+        args: [ --multiline ]
+        stages: [ commit-msg ]
+        verbose: true
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: cef0300fd0fc4d2a87a85fa2093c6b283ea36f4b  # frozen: v5.0.0
+    hooks:
+      #      - id: no-commit-to-branch
+      #        name: "Check branch naming convention"
+      #        args: [ '--branch', 'main', '--branch', 'master',
+      #                '--pattern', '(?!((^(improvement|bug|feature|test|tmp)\/HXCS-[0-9]+)*-[A-Za-z0-9._-]+$))' ]
+      #        verbose: true
+      - id: fix-byte-order-marker
+      - id: mixed-line-ending
+        args: [ '--fix=lf' ]
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+      - id: check-yaml
+        args: [ --allow-multiple-documents ]
+        exclude: '.*/templates|.updatecli/templates'
+      - id: check-xml
+      - id: check-merge-conflict
+      - id: detect-aws-credentials
+        args:
+          - --allow-missing-credentials
+      - id: detect-private-key
+
+  - repo: https://github.com/sirwart/ripsecrets.git
+    rev: 033ec5192b738b6712701be920cba545c2775050  # frozen: v0.1.8
+    hooks:
+      - id: ripsecrets
+
+  - repo: https://github.com/sirosen/check-jsonschema
+    rev: 8db279a37c552206d2df62269ff6f9d31125815a # frozen: 0.37.0
+    hooks:
+      - id: check-dependabot
+      - id: check-github-actions
+      - id: check-github-workflows
+
+  - repo: https://github.com/macisamuele/language-formatters-pre-commit-hooks.git
+    id: google-java-formatter
+    name: "Google Java Formatter"
+    rev: a6273196190bb0f68caf1dc68073cf62c719f725  # frozen: v2.14.0
+    hooks:
+      - id: pretty-format-java
+        args: [--autofix, --google-java-formatter-version=1.35.0]
+
+  - repo: https://github.com/gruntwork-io/pre-commit
+    rev: 0225754079df7cc99525ead1decb5a8e92ecb158  # frozen: v0.1.25
+    hooks:
+      - id: helmlint
+  - repo: local
+    hooks:
+      - id: helm-unittest
+        name: helm unittest
+        description: This hook run helm unittest
+        entry: bash -c 'find . -name Chart.yaml | xargs -n1 -I% bash -c "dirname %" | xargs -n1 -I% helm unittest %'
         language: system
         pass_filenames: false
-        stages: [pre-commit]
+        always_run: true
+      - id: kics-scan-local
+        name: Kics scan
+        language: docker_image
+        entry: checkmarx/kics:v2.1.20@sha256:3e5a268eb8adda2e5a483c9359ddfc4cd520ab856a7076dc0b1d8784a37e2602 scan -p ./deployment/ --no-progress --ignore-on-exit all
+        verbose: false
+  - repo: https://github.com/norwoodj/helm-docs
+    rev: 37d3055fece566105cf8cff7c17b7b2355a01677  # frozen: v1.14.2
+    hooks:
+      - id: helm-docs-built
+        args: [--skip-version-footer]

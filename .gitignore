@@ -40,6 +40,8 @@ build/
 !/.gitignore
 !/.mvn/
 !/.eclipse-java-google-style.xml
+!/Dockerfile
+!/GitVersion.yml
 !/.pre-commit-config.yaml
 !/README.md
 !/mvnw
