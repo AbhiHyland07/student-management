@@ -1,7 +1,6 @@
 package com.example.demo.configuration.OtherConfig;
 
 import com.example.demo.configuration.JwtConfig.JwtRequestFilter;
-import com.example.demo.model.enums.Role;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -44,10 +43,10 @@ public class SpringSecurityConfig {
                         "/auth/reset-password",
                         "/swagger-ui.html",
                         "/v3/api-docs/**",
-                        "/swagger-ui/**")
+                        "/swagger-ui/**",
+                        "/auth/me",
+                        "/users")
                     .permitAll()
-                    .requestMatchers("/api/admin")
-                    .hasAuthority(Role.ADMIN.name())
                     .anyRequest()
                     .authenticated());
     http.cors(Customizer.withDefaults());

@@ -16,6 +16,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -145,6 +146,76 @@ public class UserService {
     user.setPasswordResetTokenExpiresAt(null);
     user.setUpdatedAt(Instant.now());
     usersRepository.save(user);
+  }
+
+  public UsersDto createUser(Users user) {
+    if (user.getEmail() == null || user.getEmail().isBlank()) {
+      throw new RuntimeException("Email is required");
+    }
+    if (user.getFullName() == null || user.getFullName().isBlank()) {
+      throw new RuntimeException("Full name is required");
+    }
+    if (user.getPasswordHash() == null || user.getPasswordHash().isBlank()) {
+      throw new RuntimeException("Password is required");
+    }
+
+    if (usersRepository.findByEmail(user.getEmail()).isPresent()) {
+      throw new RuntimeException("User with email " + user.getEmail() + " already exists");
+    }
+
+    user.setId(UUID.randomUUID().toString());
+    user.setPasswordHash(passwordEncoder.encode(user.getPasswordHash()));
+    user.setCreatedAt(Instant.now());
+    user.setUpdatedAt(Instant.now());
+    Users savedUser = usersRepository.save(user);
+    return UsersMapper.toDto(savedUser);
+  }
+
+  public UsersDto getUserById(String id) {
+    Users user =
+        usersRepository.findById(id).orElseThrow(() -> new RuntimeException("User not found"));
+    return UsersMapper.toDto(user);
+  }
+
+  public List<UsersDto> getAllUsers() {
+    return usersRepository.findAll().stream().map(UsersMapper::toDto).toList();
+  }
+
+  public UsersDto updateUser(String id, Users userUpdates) {
+    Users user =
+        usersRepository.findById(id).orElseThrow(() -> new RuntimeException("User not found"));
+
+    if (userUpdates.getFullName() != null && !userUpdates.getFullName().isBlank()) {
+      user.setFullName(userUpdates.getFullName());
+    }
+    if (userUpdates.getAvatarUrl() != null) {
+      user.setAvatarUrl(userUpdates.getAvatarUrl());
+    }
+    if (userUpdates.getRole() != null) {
+      user.setRole(userUpdates.getRole());
+    }
+    if (userUpdates.getStatus() != null) {
+      user.setStatus(userUpdates.getStatus());
+    }
+    if (userUpdates.getPreferredLanguage() != null) {
+      user.setPreferredLanguage(userUpdates.getPreferredLanguage());
+    }
+    if (userUpdates.getPermissions() != null) {
+      user.setPermissions(userUpdates.getPermissions());
+    }
+    if (userUpdates.getAuthorId() != null) {
+      user.setAuthorId(userUpdates.getAuthorId());
+    }
+
+    user.setUpdatedAt(Instant.now());
+    Users updatedUser = usersRepository.save(user);
+    return UsersMapper.toDto(updatedUser);
+  }
+
+  public void deleteUser(String id) {
+    Users user =
+        usersRepository.findById(id).orElseThrow(() -> new RuntimeException("User not found"));
+    usersRepository.delete(user);
   }
 
   private void authenticate(String email, String password) {
