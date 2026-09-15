@@ -101,9 +101,13 @@ public class UserService {
       throw new RuntimeException("Refresh token is invalid or expired");
     }
 
+    jwtTokenUtil.invalidateRefreshToken(refreshToken);
+    String accessTokenToInvalidate = refreshTokenRequest.getAccessToken();
+    if (accessTokenToInvalidate != null && !accessTokenToInvalidate.isBlank()) {
+      jwtTokenUtil.invalidateAccessToken(accessTokenToInvalidate);
+    }
     String newAccessToken = jwtTokenUtil.generateToken(userExtend);
     String newRefreshToken = jwtTokenUtil.generateRefreshToken(userExtend);
-    jwtTokenUtil.invalidateRefreshToken(refreshToken);
     Users user = userAuthentication.loadUserDocumentByEmail(email);
     UsersDto userDto = UsersMapper.toDto(user);
     return new AuthenticationResponse(
@@ -116,6 +120,10 @@ public class UserService {
       throw new RuntimeException("Refresh token is required");
     }
     jwtTokenUtil.invalidateRefreshToken(refreshToken);
+    String accessToken = logoutRequest.getAccessToken();
+    if (accessToken != null && !accessToken.isBlank()) {
+      jwtTokenUtil.invalidateAccessToken(accessToken);
+    }
   }
 
   public UsersDto getCurrentUser() {
