@@ -17,6 +17,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.UUID;
 import java.util.regex.Pattern;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -185,6 +186,7 @@ public class ArticleService {
             .orElseThrow(() -> new ResourceNotFound("Article not found"));
     Articles duplicatedArticle = ArticlesMapper.toModel(ArticlesMapper.toDto(existingArticle));
     Instant now = Instant.now();
+    duplicatedArticle.setId(UUID.randomUUID().toString());
     duplicatedArticle.setStatus(ArticleStatus.DRAFT);
     duplicatedArticle.setCreatedAt(now);
     duplicatedArticle.setUpdatedAt(now);
