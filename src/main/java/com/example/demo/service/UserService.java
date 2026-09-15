@@ -1,7 +1,6 @@
 package com.example.demo.service;
 
 import com.example.demo.configuration.JwtConfig.JwtUtil;
-import com.example.demo.dto.AuthorsDto;
 import com.example.demo.dto.CreateUserRequestDto;
 import com.example.demo.dto.InviteUserRequestDto;
 import com.example.demo.dto.UpdateUserRequestDto;
@@ -13,7 +12,6 @@ import com.example.demo.exception.model.ResourceAlreadyPresent;
 import com.example.demo.exception.model.ResourceNotFound;
 import com.example.demo.exception.model.TokenExpiredException;
 import com.example.demo.exception.model.TokenInvalidException;
-import com.example.demo.mapper.AuthorsMapper;
 import com.example.demo.mapper.UsersMapper;
 import com.example.demo.model.Authors;
 import com.example.demo.model.Users;
@@ -196,7 +194,8 @@ public class UserService {
     user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
     user.setCreatedAt(Instant.now());
     user.setUpdatedAt(Instant.now());
-    attachAuthorIfProvided(request.getAuthor());
+    attachAuthorIdIfProvided(user, request.getAuthorId());
+    user.setAuthorId(request.getAuthorId());
     Users savedUser = usersRepository.save(user);
     return UsersMapper.toDto(savedUser);
   }
@@ -305,20 +304,6 @@ public class UserService {
             .findById(authorId)
             .orElseThrow(() -> new ResourceNotFound("Author not found"));
     user.setAuthorId(author.getId());
-  }
-
-  private void attachAuthorIfProvided(AuthorsDto authorDto) {
-    if (authorDto == null) {
-      return;
-    }
-    Authors author = AuthorsMapper.toModel(authorDto);
-    boolean authorExists =
-        author.getId() != null && authorsRepository.findById(author.getId()).isPresent();
-    if (!authorExists) {
-      author.setCreatedAt(Instant.now());
-    }
-    author.setUpdatedAt(Instant.now());
-    authorsRepository.save(author);
   }
 
   private void authenticate(String email, String password) {

@@ -4,7 +4,6 @@ import com.example.demo.model.enums.Permission;
 import com.example.demo.model.enums.PreferredLanguage;
 import com.example.demo.model.enums.Role;
 import com.example.demo.model.enums.Status;
-import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
@@ -30,7 +29,7 @@ public class CreateUserRequestDto {
   private PreferredLanguage preferredLanguage;
   private List<Permission> permissions;
 
-  @Valid private AuthorsDto author;
+  private String authorId;
 
   public String getFullName() {
     return fullName;
@@ -96,11 +95,11 @@ public class CreateUserRequestDto {
     this.permissions = permissions;
   }
 
-  public AuthorsDto getAuthor() {
-    return author;
+  public String getAuthorId() {
+    return authorId;
   }
 
-  public void setAuthor(AuthorsDto author) {
-    this.author = author;
+  public void setAuthorId(String authorId) {
+    this.authorId = authorId;
   }
 }

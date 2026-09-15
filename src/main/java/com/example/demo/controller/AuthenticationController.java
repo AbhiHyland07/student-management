@@ -20,6 +20,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -82,7 +83,8 @@ public class AuthenticationController {
         @ApiResponse(responseCode = "401", description = "Invalid or expired refresh token")
       })
   @PostMapping("/refresh")
-  @SecurityRequirement(name = "bearerAuth")
+  @SecurityRequirement(name = "Bearer Authentication")
+  @PreAuthorize("hasAuthority('EDITOR') or hasAuthority('ADMIN')")
   public ResponseEntity<AuthenticationResponse> refreshAuthentication(
       @Valid @RequestBody RefreshTokenRequest refreshTokenRequest) {
     return ResponseEntity.ok(userService.refreshAuthentication(refreshTokenRequest));
@@ -98,6 +100,8 @@ public class AuthenticationController {
         @ApiResponse(responseCode = "400", description = "Invalid logout request")
       })
   @PostMapping("/logout")
+  @SecurityRequirement(name = "Bearer Authentication")
+  @PreAuthorize("hasAuthority('EDITOR') or hasAuthority('ADMIN')")
   public ResponseEntity<Void> logout(@Valid @RequestBody LogoutRequest logoutRequest) {
     userService.logoutUser(logoutRequest);
     return ResponseEntity.noContent().build();
@@ -118,6 +122,8 @@ public class AuthenticationController {
         @ApiResponse(responseCode = "401", description = "User not authenticated")
       })
   @GetMapping("/me")
+  @SecurityRequirement(name = "Bearer Authentication")
+  @PreAuthorize("hasAuthority('EDITOR') or hasAuthority('ADMIN')")
   public ResponseEntity<UsersDto> getCurrentUser() {
     return ResponseEntity.ok(userService.getCurrentUser());
   }
@@ -149,6 +155,8 @@ public class AuthenticationController {
         @ApiResponse(responseCode = "400", description = "Invalid or expired reset token")
       })
   @PostMapping("/reset-password")
+  @SecurityRequirement(name = "Bearer Authentication")
+  @PreAuthorize("hasAuthority('EDITOR') or hasAuthority('ADMIN')")
   public ResponseEntity<Void> resetPassword(
       @Valid @RequestBody ResetPasswordRequest resetPasswordRequest) {
     userService.resetPassword(resetPasswordRequest);

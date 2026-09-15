@@ -37,15 +37,10 @@ public class SpringSecurityConfig {
             auth ->
                 auth.requestMatchers(
                         "/auth/login",
-                        "/auth/logout",
-                        "/auth/refresh",
                         "/auth/forgot-password",
-                        "/auth/reset-password",
                         "/swagger-ui.html",
                         "/v3/api-docs/**",
-                        "/swagger-ui/**",
-                        "/auth/me",
-                        "/users")
+                        "/swagger-ui/**")
                     .permitAll()
                     .anyRequest()
                     .authenticated());
