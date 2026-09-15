@@ -24,6 +24,8 @@ public class JwtUtil {
   private static final long REFRESH_TOKEN_EXPIRATION_TIME = 604800000; // 7 days in milliseconds
   private final Set<String> invalidatedRefreshTokens =
       Collections.newSetFromMap(new ConcurrentHashMap<>());
+  private final Set<String> invalidatedAccessTokens =
+      Collections.newSetFromMap(new ConcurrentHashMap<>());
 
   // Generate JWT token for a user
   public String generateToken(UserExtend userDetails) {
@@ -84,7 +86,9 @@ public class JwtUtil {
 
   public Boolean validateToken(String token, UserExtend userDetails) {
     final String email = extractUsername(token);
-    return (email.equals(userDetails.getUsername()) && !isTokenExpired(token));
+    return (email.equals(userDetails.getUsername())
+        && !isTokenExpired(token)
+        && !isAccessTokenInvalidated(token));
   }
 
   public Boolean validateRefreshToken(String token, UserExtend userDetails) {
@@ -97,7 +101,15 @@ public class JwtUtil {
     invalidatedRefreshTokens.add(token);
   }
 
+  public void invalidateAccessToken(String token) {
+    invalidatedAccessTokens.add(token);
+  }
+
   public boolean isRefreshTokenInvalidated(String token) {
     return invalidatedRefreshTokens.contains(token);
+  }
+
+  public boolean isAccessTokenInvalidated(String token) {
+    return invalidatedAccessTokens.contains(token);
   }
 }

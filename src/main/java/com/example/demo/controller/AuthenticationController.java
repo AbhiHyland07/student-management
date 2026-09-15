@@ -14,6 +14,7 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
@@ -81,6 +82,7 @@ public class AuthenticationController {
         @ApiResponse(responseCode = "401", description = "Invalid or expired refresh token")
       })
   @PostMapping("/refresh")
+  @SecurityRequirement(name = "bearerAuth")
   public ResponseEntity<AuthenticationResponse> refreshAuthentication(
       @Valid @RequestBody RefreshTokenRequest refreshTokenRequest) {
     return ResponseEntity.ok(userService.refreshAuthentication(refreshTokenRequest));
