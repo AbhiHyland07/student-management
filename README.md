@@ -1,251 +1,210 @@
-# Student Management System - API Documentation
+# Student Management System
 
-This document provides detailed API documentation for the **Student Management System**. The system allows you to manage students, teachers, courses, and authenticate users. It uses **JWT Token** for authentication and **Role-based access** (Admin, Teacher, and Student) for restricting access to certain API endpoints.
+Spring Boot + MongoDB backend for user, author, article, print issue, media, homepage config, and settings management with JWT authentication and permission-based authorization.
 
-## Technologies Used
+## Stack
 
-- **Java 25**
-- **Spring Boot** 3.5+
-- **Spring Security** for Role-based Authentication and JWT Token
-- **Spring Data MongoDB** for database access
-- **Swagger/OpenAPI** for API documentation
-- **Lombok** for reducing boilerplate code
+- Java 25
+- Spring Boot 3.5
+- Spring Security
+- Spring Data MongoDB
+- springdoc OpenAPI / Swagger UI
 
-## API Endpoints
-
-### 1. **Student Controller**
-
-#### POST /api/student
-Create a new student.
-
-**Request Body**:
-```json
-{
-    "username": "john_doe",
-    "name": "John",
-    "password": "Hello",
-    "courses": [],
-    "type":"student"
-}
-```
-
-**Response**:
-```json
-{
-    "username": "john_doe",
-    "name": "John",
-    "role": "STUDENT",
-    "courses": []
-}
-```
-#### GET /api/student/{username}
-Fetching a student.
-
-**Request URL**:
-```bash
-GET /api/student/john_doe
-```
-
-**Response**:
-```json
-{
-    "username": "john_doe",
-    "name": "John",
-    "role": "STUDENT",
-    "courses": []
-}
-```
-#### PUT /api/student/register/{username}/{id}
-Patching a course with course id for a particular student with username.
-
-**Request URL**:
-```bash
-GET PUT /api/student/register/john_doe/2
-```
-**Response**:
-```json
-{
-    "username": "john_doe",
-    "name": "John",
-    "role": "STUDENT",
-   "courses": [
-        {
-            "courseId": 2,
-            "name": "Mathematics",
-            "description":"Maths"
-        }
-    ]
-}
-```
-
-### 2. **Course Controller**
-
-#### POST /api/course
-Create a new course.
-
-**Request Body**:
-```json
-{
-    "courseId":"1"
-    "name": "Physics",
-    "description": "Physics course"
-}
-```
-
-**Response**:
-```json
-{
-    "name": "Physics",
-    "description": "Physics course"
-}
-```
-#### GET /api/course/{id}
-Fetching a course details.
-
-**Request URL**:
-```bash
-GET /api/course/1
-```
-
-**Response**:
-```json
-{
-    "name": "Physics",
-    "description": "Physics course"
-}
-```
-#### PUT /api/course/{id}
-Updating a course details.
-
-**Request URL**:
-```bash
-PUT /api/course/1
-```
-
-**Request Body**:
-```json
-{
-    "name": "Astro Physics",
-    "description": "Astro Physics course"
-}
-```
-
-**Response**:
-```json
-{
-    "name": "Astro Physics",
-    "description": "Astro Physics course"
-}
-```
-
-#### DEL /api/course/{id}
-Delete a course.
-
-**Request URL**:
-```bash
-DEL /api/course/1
-```
-
-**Response Body**:
-```json
-{
-    "name": "Astro Physics",
-    "description": "Astro Physics course"
-}
-```
-
-### 3. **Admin Controller**
-
-#### POST /api/admin
-Create a new admin.
-
-**Request Body**:
-```json
-{
-    "username":"abhi08"
-    "password": "Hello",
-}
-```
-
-**Response**:
-```json
-{
-    "username":"abhi08"
-    "password": "sdsjdkhfjkdskfhsdjfhhsf98747t734987eryghrj",
-    "role":"ADMIN"
-}
-```
-
-### 4. **Teacher Controller**
-
-#### POST /api/teacher/course/{id}
-Create a new teacher wheread {id} is courseId.
-
-**Request URL**:
-```bash
-POST /api/teacher/course/1
-```
-
-**Request Body**:
-```json
-{
-    "username": "abhi009",
-    "name": "Abhi M",
-    "password": "password",
-    "type":"teacher"
-}
-```
-
-**Response**:
-```json
-{
-    "username": "abhi009",
-    "name": "Abhi M",
-    "role":"TEACHER",
-    "course": {
-         "courseID":1
-         "name": "Astro Physics",
-         "description": "Astro Physics course"
-        }
-}
-```
-
-### 5. **Authentication Controller**
-
-#### POST /api/login
-Login to the system.
-
-**Request Body**:
-```json
-{
-    "username":"abhi08"
-    "password": "Hello",
-}
-```
-
-**Response**:
-```json
-{
-    "jwt":"eyJhbGciOiJIUzUxMiJ9.
-          eyJyb2xlIjpbeyJhdXRob3JpdHkiOiJURUFDSEVSIn1dLCJpZCI6IjY3YzAyMDQ3MjdkYzRlNjg2OTM5ODM5NyIsInVzZXIiOiJhYmhpMDA3Iiwic3ViIjoiYWJoaTAwNyIsImlhdCI6MTc0MTI1NzcxMCwiZXhwIjoxNzQxMzQ0MTEwfQ.
-          zLcB08uERRB76heZ2PVc8C3at8rPa5JHVAwSmHIjHXynjrEvEmx98Pv_PQaVptjYRNUbj4_3fPnVZE0H0CgDVw"
-}
-```
-
-## Prerequisites
-
-Before you begin, ensure you have met the following requirements:
-
-- **Java 25** or later
-- **Maven** or **Gradle** for building the project
-- An IDE such as **IntelliJ IDEA**, **Eclipse**, or **VS Code**
-
-## Getting Started
-
-Follow these instructions to set up the project locally.
-
-### Clone the repository:
+## Run
 
 ```bash
-git clone https://github.com/AbhiHyland07/student-management.git
-cd student-management
+mvn clean compile
+mvn spring-boot:run
+```
+
+Swagger UI:
+
+```text
+http://localhost:8080/swagger-ui.html
+```
+
+## Authentication
+
+Login returns:
+- `accessToken`
+- `refreshToken`
+- `expiresAt`
+- `user`
+
+Use the access token as:
+
+```text
+Authorization: Bearer <access_token>
+```
+
+## Main APIs
+
+### Auth
+
+- `POST /auth/login`
+- `POST /auth/refresh`
+- `POST /auth/logout`
+- `GET /auth/me`
+- `POST /auth/forgot-password`
+- `POST /auth/reset-password`
+
+### Dashboard
+
+- `GET /dashboard/summary`
+  - requires `dashboards:views`
+
+Response:
+
+```json
+{
+  "publishedArticleCount": 0,
+  "draftArticleCounts": 0,
+  "authorCounts": 0,
+  "printIssueCount": 0,
+  "recentArticles": [],
+  "latestPrintIssue": null
+}
+```
+
+### Users
+
+- `GET /users?page=1&pageSize=20&search=abhi`
+- `POST /users`
+- `POST /users/invite`
+- `PUT /users/{id}`
+- `POST /users/{id}/suspend`
+- `POST /users/{id}/reactivate`
+- `DELETE /users/{id}`
+
+`GET /users` response:
+
+```json
+{
+  "items": [],
+  "total": 0,
+  "page": 1,
+  "pageSize": 20
+}
+```
+
+User APIs require:
+- `ADMIN`
+- `user:view` for listing
+- `user:manage` for write operations
+
+### Authors
+
+- `GET /authors?page=1&pageSize=20&search=john`
+- `POST /authors`
+- `PUT /authors/{id}`
+- `DELETE /authors/{id}`
+
+Response:
+
+```json
+{
+  "items": [],
+  "totalCount": 0,
+  "pageSize": 20,
+  "page": 1
+}
+```
+
+### Articles
+
+- `GET /articles`
+  - query params:
+    - `page`
+    - `pageSize`
+    - `search`
+    - `publicationSource`
+    - `articleType`
+    - `status`
+    - `authorId`
+    - `printIssueId`
+    - `hasVideo`
+    - `sortBy`
+    - `sortDirection`
+- `GET /articles/by-ids?ids=id1,id2`
+- `GET /articles/{id}`
+- `POST /articles`
+- `PUT /articles/{id}`
+- `DELETE /articles/{id}`
+- `POST /articles/{id}/duplication`
+
+List response:
+
+```json
+{
+  "items": [],
+  "total": 0,
+  "pageSize": 20,
+  "page": 1
+}
+```
+
+`GET /articles/by-ids` returns only:
+- `id`
+- `title`
+- `publicationSource`
+- `articleType`
+- `featuredImageUrl`
+- `status`
+
+`POST /articles/{id}/duplication` creates a new copied article with:
+- `status = DRAFT`
+- new Mongo document
+- cleared `publishedAt`
+
+### Print Issues
+
+- `GET /print-issues?page=1&pageSize=20`
+- `GET /print-issues/latest`
+- `POST /print-issues`
+- `PUT /print-issues/{id}`
+- `DELETE /print-issues/{id}`
+
+List response:
+
+```json
+{
+  "items": [],
+  "total": 0,
+  "page": 1,
+  "pageSize": 20
+}
+```
+
+`/print-issues/latest` returns the latest issue by `publicationDate` or `null`.
+
+### Media
+
+- `GET /media?page=1&pageSize=20&kind=IMAGE`
+- `POST /media/upload`
+- `DELETE /media/{id}`
+
+`POST /media/upload`:
+- multipart form-data
+- field name: `file`
+
+### Homepage Config
+
+- `GET /homepage-config`
+- `PUT /homepage-config`
+
+Both require `homepage:manage`.
+
+### Settings
+
+- `GET /settings`
+- `PUT /settings`
+
+Both require:
+- `ADMIN`
+- `settings:manage`
+
+## Notes
+
+- Mongo document ids are intended to be managed by MongoDB.
+- List `total` / `totalCount` values represent the full collection count, not just the current page size.
+- Email validation enforces lowercase valid email format.
