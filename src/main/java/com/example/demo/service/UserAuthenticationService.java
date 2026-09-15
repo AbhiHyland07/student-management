@@ -2,9 +2,12 @@ package com.example.demo.service;
 
 import com.example.demo.model.Users;
 import com.example.demo.model.authentication.UserExtend;
+import com.example.demo.model.enums.Permission;
 import com.example.demo.repository.UsersRepository;
-import java.util.Collections;
+import java.util.ArrayList;
+import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -28,11 +31,14 @@ public class UserAuthenticationService implements UserDetailsService {
             .findByEmail(email)
             .orElseThrow(
                 () -> new UsernameNotFoundException("User not found with email: " + email));
-    User securityUser =
-        new User(
-            user.getEmail(),
-            user.getPasswordHash(),
-            Collections.singletonList(new SimpleGrantedAuthority(user.getRole().name())));
+    List<GrantedAuthority> authorities = new ArrayList<>();
+    authorities.add(new SimpleGrantedAuthority(user.getRole().name()));
+    if (user.getPermissions() != null) {
+      for (Permission permission : user.getPermissions()) {
+        authorities.add(new SimpleGrantedAuthority(permission.getValue()));
+      }
+    }
+    User securityUser = new User(user.getEmail(), user.getPasswordHash(), authorities);
     return new UserExtend(securityUser, user.getId(), user);
   }
 

@@ -28,7 +28,6 @@ public final class MediaAssetMapper {
       return null;
     }
     MediaAsset mediaAsset = new MediaAsset();
-    mediaAsset.setId(dto.getId());
     mediaAsset.setUrl(dto.getUrl());
     mediaAsset.setFileName(dto.getFileName());
     mediaAsset.setKind(dto.getKind());
