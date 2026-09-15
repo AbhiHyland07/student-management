@@ -31,7 +31,6 @@ public final class UsersMapper {
       return null;
     }
     Users users = new Users();
-    users.setId(dto.getId());
     users.setFullName(dto.getFullName());
     users.setEmail(dto.getEmail());
     users.setRole(dto.getRole());

@@ -28,7 +28,6 @@ public final class HomePageConfigMapper {
       return null;
     }
     HomePageConfig config = new HomePageConfig();
-    config.setId(dto.getId());
     config.setMainArticleId(dto.getMainArticleId());
     config.setLatestUpdatedSource(dto.getLatestUpdatedSource());
     config.setLatestUpdatedCount(dto.getLatestUpdatedCount());
