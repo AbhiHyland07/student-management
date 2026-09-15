@@ -29,6 +29,7 @@ public final class PrintIssuesMapper {
       return null;
     }
     PrintIssues printIssues = new PrintIssues();
+    printIssues.setId(dto.getId());
     printIssues.setVolumeNumber(dto.getVolumeNumber());
     printIssues.setIssueNumber(dto.getIssueNumber());
     printIssues.setPublicationDate(dto.getPublicationDate());

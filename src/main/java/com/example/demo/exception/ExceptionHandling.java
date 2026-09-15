@@ -1,7 +1,12 @@
 package com.example.demo.exception;
 
+import com.example.demo.exception.model.AuthenticationFailedException;
+import com.example.demo.exception.model.FileUploadException;
+import com.example.demo.exception.model.InvalidRequestException;
 import com.example.demo.exception.model.ResourceAlreadyPresent;
 import com.example.demo.exception.model.ResourceNotFound;
+import com.example.demo.exception.model.TokenExpiredException;
+import com.example.demo.exception.model.TokenInvalidException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
@@ -18,6 +23,18 @@ public class ExceptionHandling {
       return new ResponseEntity<>(response, HttpStatus.FOUND);
     }
     return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+  }
+
+  @ExceptionHandler({
+    InvalidRequestException.class,
+    TokenInvalidException.class,
+    TokenExpiredException.class,
+    AuthenticationFailedException.class,
+    FileUploadException.class
+  })
+  public ResponseEntity<ApiResponse> handleBadRequestExceptions(RuntimeException ex) {
+    ApiResponse response = new ApiResponse(false, ex.getMessage(), ex.getClass().getSimpleName());
+    return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
   }
 
   @ExceptionHandler({RuntimeException.class})

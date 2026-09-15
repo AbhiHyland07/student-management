@@ -34,6 +34,7 @@ public final class ArticlesMapper {
       return null;
     }
     Articles articles = new Articles();
+    articles.setId(dto.getId());
     articles.setTitle(LocalizedTextMapper.toModel(dto.getTitle()));
     articles.setAuthorId(dto.getAuthorId());
     articles.setArticleType(dto.getArticleType());

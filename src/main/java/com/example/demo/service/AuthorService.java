@@ -2,6 +2,7 @@ package com.example.demo.service;
 
 import com.example.demo.dto.AuthorListResponseDto;
 import com.example.demo.dto.AuthorsDto;
+import com.example.demo.exception.model.ResourceNotFound;
 import com.example.demo.mapper.AuthorsMapper;
 import com.example.demo.model.Authors;
 import com.example.demo.repository.AuthorsRepository;
@@ -67,7 +68,7 @@ public class AuthorService {
 
   public void updateAuthor(String id, AuthorsDto authorsDto) {
     Authors existingAuthor =
-        authorsRepository.findById(id).orElseThrow(() -> new RuntimeException("Author not found"));
+        authorsRepository.findById(id).orElseThrow(() -> new ResourceNotFound("Author not found"));
     Authors updatedAuthor = AuthorsMapper.toModel(authorsDto);
     updatedAuthor.setId(existingAuthor.getId());
     updatedAuthor.setCreatedAt(existingAuthor.getCreatedAt());
@@ -77,7 +78,7 @@ public class AuthorService {
 
   public void deleteAuthor(String id) {
     Authors existingAuthor =
-        authorsRepository.findById(id).orElseThrow(() -> new RuntimeException("Author not found"));
+        authorsRepository.findById(id).orElseThrow(() -> new ResourceNotFound("Author not found"));
     authorsRepository.delete(existingAuthor);
   }
 }

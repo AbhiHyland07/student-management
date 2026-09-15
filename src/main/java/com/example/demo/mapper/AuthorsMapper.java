@@ -30,6 +30,7 @@ public final class AuthorsMapper {
       return null;
     }
     Authors authors = new Authors();
+    authors.setId(dto.getId());
     authors.setDisplayName(dto.getDisplayName());
     authors.setSlug(dto.getSlug());
     authors.setAvatarUrl(dto.getAvatarUrl());

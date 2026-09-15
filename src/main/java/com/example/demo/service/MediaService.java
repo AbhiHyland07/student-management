@@ -2,6 +2,9 @@ package com.example.demo.service;
 
 import com.example.demo.dto.MediaAssetDto;
 import com.example.demo.dto.MediaAssetListResponseDto;
+import com.example.demo.exception.model.FileUploadException;
+import com.example.demo.exception.model.InvalidRequestException;
+import com.example.demo.exception.model.ResourceNotFound;
 import com.example.demo.mapper.MediaAssetMapper;
 import com.example.demo.model.MediaAsset;
 import com.example.demo.repository.MediaAssetRepository;
@@ -56,7 +59,7 @@ public class MediaService {
 
   public MediaAssetDto uploadMedia(MultipartFile file) {
     if (file == null || file.isEmpty()) {
-      throw new RuntimeException("File is required");
+      throw new InvalidRequestException("File is required");
     }
 
     try {
@@ -77,7 +80,7 @@ public class MediaService {
 
       return MediaAssetMapper.toDto(mediaAssetRepository.save(mediaAsset));
     } catch (IOException e) {
-      throw new RuntimeException("Failed to upload file", e);
+      throw new FileUploadException("Failed to upload file", e);
     }
   }
 
@@ -85,7 +88,7 @@ public class MediaService {
     MediaAsset mediaAsset =
         mediaAssetRepository
             .findById(id)
-            .orElseThrow(() -> new RuntimeException("Media not found"));
+            .orElseThrow(() -> new ResourceNotFound("Media not found"));
     mediaAssetRepository.delete(mediaAsset);
   }
 

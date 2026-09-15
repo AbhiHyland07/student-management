@@ -2,6 +2,7 @@ package com.example.demo.service;
 
 import com.example.demo.dto.PrintIssueListResponseDto;
 import com.example.demo.dto.PrintIssuesDto;
+import com.example.demo.exception.model.ResourceNotFound;
 import com.example.demo.mapper.PrintIssuesMapper;
 import com.example.demo.model.PrintIssues;
 import com.example.demo.repository.PrintIssuesRepository;
@@ -58,7 +59,7 @@ public class PrintIssueService {
     PrintIssues existingPrintIssue =
         printIssuesRepository
             .findById(id)
-            .orElseThrow(() -> new RuntimeException("Print issue not found"));
+            .orElseThrow(() -> new ResourceNotFound("Print issue not found"));
     PrintIssues updatedPrintIssue = PrintIssuesMapper.toModel(printIssuesDto);
     updatedPrintIssue.setId(existingPrintIssue.getId());
     updatedPrintIssue.setCreatedAt(existingPrintIssue.getCreatedAt());
@@ -70,7 +71,7 @@ public class PrintIssueService {
     PrintIssues existingPrintIssue =
         printIssuesRepository
             .findById(id)
-            .orElseThrow(() -> new RuntimeException("Print issue not found"));
+            .orElseThrow(() -> new ResourceNotFound("Print issue not found"));
     printIssuesRepository.delete(existingPrintIssue);
   }
 }

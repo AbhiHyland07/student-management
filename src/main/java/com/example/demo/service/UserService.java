@@ -7,6 +7,12 @@ import com.example.demo.dto.InviteUserRequestDto;
 import com.example.demo.dto.UpdateUserRequestDto;
 import com.example.demo.dto.UserListResponseDto;
 import com.example.demo.dto.UsersDto;
+import com.example.demo.exception.model.AuthenticationFailedException;
+import com.example.demo.exception.model.InvalidRequestException;
+import com.example.demo.exception.model.ResourceAlreadyPresent;
+import com.example.demo.exception.model.ResourceNotFound;
+import com.example.demo.exception.model.TokenExpiredException;
+import com.example.demo.exception.model.TokenInvalidException;
 import com.example.demo.mapper.AuthorsMapper;
 import com.example.demo.mapper.UsersMapper;
 import com.example.demo.model.Authors;
@@ -75,8 +81,8 @@ public class UserService {
       HttpServletRequest request) {
     try {
       authenticate(authenticationRequest.getEmail(), authenticationRequest.getPassword());
-    } catch (Exception e) {
-      throw new RuntimeException("User Credential does not match");
+    } catch (Exception _) {
+      throw new AuthenticationFailedException("User Credential does not match");
     }
     final UserDetails userDetails =
         userAuthentication.loadUserByUsername(authenticationRequest.getEmail());
@@ -92,13 +98,13 @@ public class UserService {
   public AuthenticationResponse refreshAuthentication(RefreshTokenRequest refreshTokenRequest) {
     String refreshToken = refreshTokenRequest.getRefreshToken();
     if (refreshToken == null || refreshToken.isBlank()) {
-      throw new RuntimeException("Refresh token is required");
+      throw new InvalidRequestException("Refresh token is required");
     }
 
     String email = jwtTokenUtil.extractUsername(refreshToken);
     UserExtend userExtend = (UserExtend) userAuthentication.loadUserByUsername(email);
-    if (!jwtTokenUtil.validateRefreshToken(refreshToken, userExtend)) {
-      throw new RuntimeException("Refresh token is invalid or expired");
+    if (Boolean.FALSE.equals(jwtTokenUtil.validateRefreshToken(refreshToken, userExtend))) {
+      throw new TokenInvalidException("Refresh token is invalid or expired");
     }
 
     jwtTokenUtil.invalidateRefreshToken(refreshToken);
@@ -117,7 +123,7 @@ public class UserService {
   public void logoutUser(LogoutRequest logoutRequest) {
     String refreshToken = logoutRequest.getRefreshToken();
     if (refreshToken == null || refreshToken.isBlank()) {
-      throw new RuntimeException("Refresh token is required");
+      throw new InvalidRequestException("Refresh token is required");
     }
     jwtTokenUtil.invalidateRefreshToken(refreshToken);
     String accessToken = logoutRequest.getAccessToken();
@@ -130,7 +136,7 @@ public class UserService {
     Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
     if (authentication == null
         || !(authentication.getPrincipal() instanceof UserExtend userExtend)) {
-      throw new RuntimeException("No authenticated user found");
+      throw new ResourceNotFound("No authenticated user found");
     }
     return UsersMapper.toDto(userExtend.getUserDocument());
   }
@@ -138,7 +144,7 @@ public class UserService {
   public void forgotPassword(ForgotPasswordRequest forgotPasswordRequest) {
     String email = forgotPasswordRequest.getEmail();
     if (email == null || email.isBlank()) {
-      throw new RuntimeException("Email is required");
+      throw new InvalidRequestException("Email is required");
     }
 
     Users user = userAuthentication.loadUserDocumentByEmail(email);
@@ -152,19 +158,19 @@ public class UserService {
     String token = resetPasswordRequest.getToken();
     String newPassword = resetPasswordRequest.getNewPassword();
     if (token == null || token.isBlank()) {
-      throw new RuntimeException("Reset token is required");
+      throw new InvalidRequestException("Reset token is required");
     }
     if (newPassword == null || newPassword.isBlank()) {
-      throw new RuntimeException("New password is required");
+      throw new InvalidRequestException("New password is required");
     }
 
     Users user =
         usersRepository
             .findByPasswordResetToken(token)
-            .orElseThrow(() -> new RuntimeException("Reset token is invalid"));
+            .orElseThrow(() -> new TokenInvalidException("Reset token is invalid"));
     Instant expiresAt = user.getPasswordResetTokenExpiresAt();
     if (expiresAt == null || expiresAt.isBefore(Instant.now())) {
-      throw new RuntimeException("Reset token has expired");
+      throw new TokenExpiredException("Reset token has expired");
     }
 
     user.setPasswordHash(passwordEncoder.encode(newPassword));
@@ -176,7 +182,7 @@ public class UserService {
 
   public UsersDto createUser(CreateUserRequestDto request) {
     if (usersRepository.findByEmail(request.getEmail()).isPresent()) {
-      throw new RuntimeException("User with email " + request.getEmail() + " already exists");
+      throw new ResourceAlreadyPresent("User with email " + request.getEmail() + " already exists");
     }
     Users user = new Users();
     user.setFullName(request.getFullName());
@@ -190,14 +196,14 @@ public class UserService {
     user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
     user.setCreatedAt(Instant.now());
     user.setUpdatedAt(Instant.now());
-    attachAuthorIfProvided(user, request.getAuthor());
+    attachAuthorIfProvided(request.getAuthor());
     Users savedUser = usersRepository.save(user);
     return UsersMapper.toDto(savedUser);
   }
 
   public UsersDto inviteUser(InviteUserRequestDto request) {
     if (usersRepository.findByEmail(request.getEmail()).isPresent()) {
-      throw new RuntimeException("User with email " + request.getEmail() + " already exists");
+      throw new ResourceAlreadyPresent("User with email " + request.getEmail() + " already exists");
     }
     Users user = new Users();
     user.setFullName(request.getFullName());
@@ -209,14 +215,8 @@ public class UserService {
     user.setPermissions(request.getPermissions());
     user.setCreatedAt(Instant.now());
     user.setUpdatedAt(Instant.now());
-    attachAuthorIfProvided(user, request.getAuthor());
+    attachAuthorIdIfProvided(user, request.getAuthorId());
     return UsersMapper.toDto(usersRepository.save(user));
-  }
-
-  public UsersDto getUserById(String id) {
-    Users user =
-        usersRepository.findById(id).orElseThrow(() -> new RuntimeException("User not found"));
-    return UsersMapper.toDto(user);
   }
 
   public UserListResponseDto getUsers(Integer page, Integer pageSize, String search) {
@@ -248,7 +248,7 @@ public class UserService {
 
   public UsersDto updateUser(String id, UpdateUserRequestDto userUpdates) {
     Users user =
-        usersRepository.findById(id).orElseThrow(() -> new RuntimeException("User not found"));
+        usersRepository.findById(id).orElseThrow(() -> new ResourceNotFound("User not found"));
 
     if (userUpdates.getFullName() != null && !userUpdates.getFullName().isBlank()) {
       user.setFullName(userUpdates.getFullName());
@@ -268,7 +268,7 @@ public class UserService {
     if (userUpdates.getPermissions() != null) {
       user.setPermissions(userUpdates.getPermissions());
     }
-    attachAuthorIfProvided(user, userUpdates.getAuthor());
+    attachAuthorIdIfProvided(user, userUpdates.getAuthorId());
     user.setUpdatedAt(Instant.now());
     Users updatedUser = usersRepository.save(user);
     return UsersMapper.toDto(updatedUser);
@@ -276,7 +276,7 @@ public class UserService {
 
   public void suspendUser(String id) {
     Users user =
-        usersRepository.findById(id).orElseThrow(() -> new RuntimeException("User not found"));
+        usersRepository.findById(id).orElseThrow(() -> new ResourceNotFound("User not found"));
     user.setStatus(com.example.demo.model.enums.Status.SUSPENDED);
     user.setUpdatedAt(Instant.now());
     usersRepository.save(user);
@@ -284,7 +284,7 @@ public class UserService {
 
   public void reactivateUser(String id) {
     Users user =
-        usersRepository.findById(id).orElseThrow(() -> new RuntimeException("User not found"));
+        usersRepository.findById(id).orElseThrow(() -> new ResourceNotFound("User not found"));
     user.setStatus(com.example.demo.model.enums.Status.ACTIVE);
     user.setUpdatedAt(Instant.now());
     usersRepository.save(user);
@@ -292,28 +292,42 @@ public class UserService {
 
   public void deleteUser(String id) {
     Users user =
-        usersRepository.findById(id).orElseThrow(() -> new RuntimeException("User not found"));
+        usersRepository.findById(id).orElseThrow(() -> new ResourceNotFound("User not found"));
     usersRepository.delete(user);
   }
 
-  private void attachAuthorIfProvided(Users user, AuthorsDto authorDto) {
+  private void attachAuthorIdIfProvided(Users user, String authorId) {
+    if (authorId == null || authorId.isBlank()) {
+      return;
+    }
+    Authors author =
+        authorsRepository
+            .findById(authorId)
+            .orElseThrow(() -> new ResourceNotFound("Author not found"));
+    user.setAuthorId(author.getId());
+  }
+
+  private void attachAuthorIfProvided(AuthorsDto authorDto) {
     if (authorDto == null) {
       return;
     }
     Authors author = AuthorsMapper.toModel(authorDto);
-    author.setCreatedAt(Instant.now());
+    boolean authorExists =
+        author.getId() != null && authorsRepository.findById(author.getId()).isPresent();
+    if (!authorExists) {
+      author.setCreatedAt(Instant.now());
+    }
     author.setUpdatedAt(Instant.now());
-    Authors savedAuthor = authorsRepository.save(author);
-    user.setAuthorId(savedAuthor.getId());
+    authorsRepository.save(author);
   }
 
   private void authenticate(String email, String password) {
     try {
       authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(email, password));
-    } catch (DisabledException e) {
-      throw new RuntimeException("User Disabled");
-    } catch (BadCredentialsException e) {
-      throw new RuntimeException("Bad Credentials");
+    } catch (DisabledException _) {
+      throw new AuthenticationFailedException("User Disabled");
+    } catch (BadCredentialsException _) {
+      throw new AuthenticationFailedException("Bad Credentials");
     }
   }
 }

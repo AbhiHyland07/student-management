@@ -59,7 +59,7 @@ public class AuthenticationController {
                     schema = @Schema(implementation = AuthenticationResponse.class))),
       })
   @PostMapping("/login")
-  public ResponseEntity<?> createAuthenticationToken(
+  public ResponseEntity<AuthenticationResponse> createAuthenticationToken(
       @Valid @RequestBody AuthenticationRequest authenticationRequest,
       HttpServletResponse response,
       HttpServletRequest request) {
