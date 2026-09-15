@@ -1,8 +1,15 @@
 package com.example.demo.service;
 
 import com.example.demo.configuration.JwtConfig.JwtUtil;
+import com.example.demo.dto.AuthorsDto;
+import com.example.demo.dto.CreateUserRequestDto;
+import com.example.demo.dto.InviteUserRequestDto;
+import com.example.demo.dto.UpdateUserRequestDto;
+import com.example.demo.dto.UserListResponseDto;
 import com.example.demo.dto.UsersDto;
+import com.example.demo.mapper.AuthorsMapper;
 import com.example.demo.mapper.UsersMapper;
+import com.example.demo.model.Authors;
 import com.example.demo.model.Users;
 import com.example.demo.model.authentication.AuthenticationRequest;
 import com.example.demo.model.authentication.AuthenticationResponse;
@@ -11,14 +18,19 @@ import com.example.demo.model.authentication.LogoutRequest;
 import com.example.demo.model.authentication.RefreshTokenRequest;
 import com.example.demo.model.authentication.ResetPasswordRequest;
 import com.example.demo.model.authentication.UserExtend;
+import com.example.demo.repository.AuthorsRepository;
 import com.example.demo.repository.UsersRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.List;
 import java.util.UUID;
+import java.util.regex.Pattern;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.DisabledException;
@@ -35,7 +47,9 @@ public class UserService {
   private final UserAuthenticationService userAuthentication;
   private final AuthenticationManager authenticationManager;
   private final UsersRepository usersRepository;
+  private final AuthorsRepository authorsRepository;
   private final PasswordEncoder passwordEncoder;
+  private final MongoTemplate mongoTemplate;
 
   @Autowired
   public UserService(
@@ -43,12 +57,16 @@ public class UserService {
       UserAuthenticationService userAuthentication,
       AuthenticationManager authenticationManager,
       UsersRepository usersRepository,
-      PasswordEncoder passwordEncoder) {
+      AuthorsRepository authorsRepository,
+      PasswordEncoder passwordEncoder,
+      MongoTemplate mongoTemplate) {
     this.jwtTokenUtil = jwtTokenUtil;
     this.userAuthentication = userAuthentication;
     this.authenticationManager = authenticationManager;
     this.usersRepository = usersRepository;
+    this.authorsRepository = authorsRepository;
     this.passwordEncoder = passwordEncoder;
+    this.mongoTemplate = mongoTemplate;
   }
 
   public AuthenticationResponse authenticateUser(
@@ -148,27 +166,43 @@ public class UserService {
     usersRepository.save(user);
   }
 
-  public UsersDto createUser(Users user) {
-    if (user.getEmail() == null || user.getEmail().isBlank()) {
-      throw new RuntimeException("Email is required");
+  public UsersDto createUser(CreateUserRequestDto request) {
+    if (usersRepository.findByEmail(request.getEmail()).isPresent()) {
+      throw new RuntimeException("User with email " + request.getEmail() + " already exists");
     }
-    if (user.getFullName() == null || user.getFullName().isBlank()) {
-      throw new RuntimeException("Full name is required");
-    }
-    if (user.getPasswordHash() == null || user.getPasswordHash().isBlank()) {
-      throw new RuntimeException("Password is required");
-    }
-
-    if (usersRepository.findByEmail(user.getEmail()).isPresent()) {
-      throw new RuntimeException("User with email " + user.getEmail() + " already exists");
-    }
-
+    Users user = new Users();
+    user.setFullName(request.getFullName());
+    user.setEmail(request.getEmail());
+    user.setRole(request.getRole());
+    user.setAvatarUrl(request.getAvatarUrl());
+    user.setStatus(request.getStatus());
+    user.setPreferredLanguage(request.getPreferredLanguage());
+    user.setPermissions(request.getPermissions());
     user.setId(UUID.randomUUID().toString());
-    user.setPasswordHash(passwordEncoder.encode(user.getPasswordHash()));
+    user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
     user.setCreatedAt(Instant.now());
     user.setUpdatedAt(Instant.now());
+    attachAuthorIfProvided(user, request.getAuthor());
     Users savedUser = usersRepository.save(user);
     return UsersMapper.toDto(savedUser);
+  }
+
+  public UsersDto inviteUser(InviteUserRequestDto request) {
+    if (usersRepository.findByEmail(request.getEmail()).isPresent()) {
+      throw new RuntimeException("User with email " + request.getEmail() + " already exists");
+    }
+    Users user = new Users();
+    user.setFullName(request.getFullName());
+    user.setEmail(request.getEmail());
+    user.setRole(request.getRole());
+    user.setAvatarUrl(request.getAvatarUrl());
+    user.setStatus(com.example.demo.model.enums.Status.INVITED);
+    user.setPreferredLanguage(request.getPreferredLanguage());
+    user.setPermissions(request.getPermissions());
+    user.setCreatedAt(Instant.now());
+    user.setUpdatedAt(Instant.now());
+    attachAuthorIfProvided(user, request.getAuthor());
+    return UsersMapper.toDto(usersRepository.save(user));
   }
 
   public UsersDto getUserById(String id) {
@@ -177,11 +211,34 @@ public class UserService {
     return UsersMapper.toDto(user);
   }
 
-  public List<UsersDto> getAllUsers() {
-    return usersRepository.findAll().stream().map(UsersMapper::toDto).toList();
+  public UserListResponseDto getUsers(Integer page, Integer pageSize, String search) {
+    int resolvedPage = page == null || page < 1 ? 1 : page;
+    int resolvedPageSize = pageSize == null || pageSize < 1 ? 20 : pageSize;
+
+    Query query = new Query();
+    if (search != null && !search.isBlank()) {
+      String escapedSearch = Pattern.quote(search.trim());
+      query.addCriteria(
+          new Criteria()
+              .orOperator(
+                  Criteria.where("fullName").regex(escapedSearch, "i"),
+                  Criteria.where("email").regex(escapedSearch, "i")));
+    }
+    long total = mongoTemplate.count(new Query(), Users.class);
+    query.with(Sort.by(Sort.Direction.DESC, "createdAt"));
+    query.skip((long) (resolvedPage - 1) * resolvedPageSize);
+    query.limit(resolvedPageSize);
+
+    UserListResponseDto response = new UserListResponseDto();
+    response.setItems(
+        mongoTemplate.find(query, Users.class).stream().map(UsersMapper::toDto).toList());
+    response.setTotal(total);
+    response.setPage(resolvedPage);
+    response.setPageSize(resolvedPageSize);
+    return response;
   }
 
-  public UsersDto updateUser(String id, Users userUpdates) {
+  public UsersDto updateUser(String id, UpdateUserRequestDto userUpdates) {
     Users user =
         usersRepository.findById(id).orElseThrow(() -> new RuntimeException("User not found"));
 
@@ -203,19 +260,43 @@ public class UserService {
     if (userUpdates.getPermissions() != null) {
       user.setPermissions(userUpdates.getPermissions());
     }
-    if (userUpdates.getAuthorId() != null) {
-      user.setAuthorId(userUpdates.getAuthorId());
-    }
-
+    attachAuthorIfProvided(user, userUpdates.getAuthor());
     user.setUpdatedAt(Instant.now());
     Users updatedUser = usersRepository.save(user);
     return UsersMapper.toDto(updatedUser);
+  }
+
+  public void suspendUser(String id) {
+    Users user =
+        usersRepository.findById(id).orElseThrow(() -> new RuntimeException("User not found"));
+    user.setStatus(com.example.demo.model.enums.Status.SUSPENDED);
+    user.setUpdatedAt(Instant.now());
+    usersRepository.save(user);
+  }
+
+  public void reactivateUser(String id) {
+    Users user =
+        usersRepository.findById(id).orElseThrow(() -> new RuntimeException("User not found"));
+    user.setStatus(com.example.demo.model.enums.Status.ACTIVE);
+    user.setUpdatedAt(Instant.now());
+    usersRepository.save(user);
   }
 
   public void deleteUser(String id) {
     Users user =
         usersRepository.findById(id).orElseThrow(() -> new RuntimeException("User not found"));
     usersRepository.delete(user);
+  }
+
+  private void attachAuthorIfProvided(Users user, AuthorsDto authorDto) {
+    if (authorDto == null) {
+      return;
+    }
+    Authors author = AuthorsMapper.toModel(authorDto);
+    author.setCreatedAt(Instant.now());
+    author.setUpdatedAt(Instant.now());
+    Authors savedAuthor = authorsRepository.save(author);
+    user.setAuthorId(savedAuthor.getId());
   }
 
   private void authenticate(String email, String password) {
