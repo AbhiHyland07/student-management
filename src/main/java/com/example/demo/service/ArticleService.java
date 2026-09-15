@@ -3,6 +3,7 @@ package com.example.demo.service;
 import com.example.demo.dto.ArticleListResponseDto;
 import com.example.demo.dto.ArticleSummaryDto;
 import com.example.demo.dto.ArticlesDto;
+import com.example.demo.exception.model.ResourceNotFound;
 import com.example.demo.mapper.ArticlesMapper;
 import com.example.demo.mapper.LocalizedTextMapper;
 import com.example.demo.model.Articles;
@@ -10,6 +11,8 @@ import com.example.demo.model.enums.ArticleStatus;
 import com.example.demo.model.enums.ArticleType;
 import com.example.demo.model.enums.PublicationSource;
 import com.example.demo.repository.ArticlesRepository;
+import com.example.demo.repository.AuthorsRepository;
+import com.example.demo.repository.PrintIssuesRepository;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -27,10 +30,18 @@ public class ArticleService {
 
   private final MongoTemplate mongoTemplate;
   private final ArticlesRepository articlesRepository;
+  private final AuthorsRepository authorsRepository;
+  private final PrintIssuesRepository printIssuesRepository;
 
-  public ArticleService(MongoTemplate mongoTemplate, ArticlesRepository articlesRepository) {
+  public ArticleService(
+      MongoTemplate mongoTemplate,
+      ArticlesRepository articlesRepository,
+      AuthorsRepository authorsRepository,
+      PrintIssuesRepository printIssuesRepository) {
     this.mongoTemplate = mongoTemplate;
     this.articlesRepository = articlesRepository;
+    this.authorsRepository = authorsRepository;
+    this.printIssuesRepository = printIssuesRepository;
   }
 
   public ArticleListResponseDto getArticles(
@@ -123,11 +134,12 @@ public class ArticleService {
     return articlesRepository
         .findById(id)
         .map(ArticlesMapper::toDto)
-        .orElseThrow(() -> new RuntimeException("Article not found"));
+        .orElseThrow(() -> new ResourceNotFound("Article not found"));
   }
 
   public ArticleSummaryDto createArticle(ArticlesDto articleDto) {
     Articles article = ArticlesMapper.toModel(articleDto);
+    validateReferences(article);
     Instant now = Instant.now();
     article.setCreatedAt(now);
     article.setUpdatedAt(now);
@@ -142,9 +154,10 @@ public class ArticleService {
     Articles existingArticle =
         articlesRepository
             .findById(id)
-            .orElseThrow(() -> new RuntimeException("Article not found"));
+            .orElseThrow(() -> new ResourceNotFound("Article not found"));
     Articles updatedArticle = ArticlesMapper.toModel(articleDto);
     updatedArticle.setId(existingArticle.getId());
+    validateReferences(updatedArticle);
     updatedArticle.setCreatedAt(existingArticle.getCreatedAt());
     updatedArticle.setUpdatedAt(Instant.now());
     if (updatedArticle.getStatus() == ArticleStatus.PUBLISHED
@@ -161,7 +174,7 @@ public class ArticleService {
     Articles existingArticle =
         articlesRepository
             .findById(id)
-            .orElseThrow(() -> new RuntimeException("Article not found"));
+            .orElseThrow(() -> new ResourceNotFound("Article not found"));
     articlesRepository.delete(existingArticle);
   }
 
@@ -169,7 +182,7 @@ public class ArticleService {
     Articles existingArticle =
         articlesRepository
             .findById(id)
-            .orElseThrow(() -> new RuntimeException("Article not found"));
+            .orElseThrow(() -> new ResourceNotFound("Article not found"));
     Articles duplicatedArticle = ArticlesMapper.toModel(ArticlesMapper.toDto(existingArticle));
     Instant now = Instant.now();
     duplicatedArticle.setStatus(ArticleStatus.DRAFT);
@@ -196,5 +209,18 @@ public class ArticleService {
         || "updatedAt".equals(sortBy)
         || "publicationDate".equals(sortBy)
         || "publishedAt".equals(sortBy);
+  }
+
+  private void validateReferences(Articles article) {
+    if (article.getAuthorId() != null
+        && !article.getAuthorId().isBlank()
+        && authorsRepository.findById(article.getAuthorId()).isEmpty()) {
+      throw new ResourceNotFound("Author not found");
+    }
+    if (article.getPrintIssueId() != null
+        && !article.getPrintIssueId().isBlank()
+        && printIssuesRepository.findById(article.getPrintIssueId()).isEmpty()) {
+      throw new ResourceNotFound("Print issue not found");
+    }
   }
 }

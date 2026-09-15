@@ -24,6 +24,7 @@ public final class SiteSettingsMapper {
       return null;
     }
     SiteSettings siteSettings = new SiteSettings();
+    siteSettings.setId(dto.getId());
     siteSettings.setSiteName(toSiteName(dto.getSiteName()));
     siteSettings.setContactEmail(dto.getContactEmail());
     siteSettings.setDefaultShareImageUrl(dto.getDefaultShareImageUrl());

@@ -7,7 +7,6 @@ import com.example.demo.model.enums.ArticleStatus;
 import com.example.demo.repository.ArticlesRepository;
 import com.example.demo.repository.AuthorsRepository;
 import com.example.demo.repository.PrintIssuesRepository;
-import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -34,7 +33,7 @@ public class DashboardService {
     summary.setRecentArticles(
         articlesRepository.findTop5ByOrderByCreatedAtDesc().stream()
             .map(ArticlesMapper::toDto)
-            .collect(Collectors.toList()));
+            .toList());
     summary.setLatestPrintIssue(
         printIssuesRepository
             .findTopByOrderByPublicationDateDesc()
