@@ -17,6 +17,7 @@ public class PrintIssues {
   private Boolean isPublished;
   private Instant createdAt;
   private Instant updatedAt;
+  private Instant deletedAt;
 
   public String getId() {
     return id;
@@ -96,5 +97,17 @@ public class PrintIssues {
 
   public void setUpdatedAt(Instant updatedAt) {
     this.updatedAt = updatedAt;
+  }
+
+  public Instant getDeletedAt() {
+    return deletedAt;
+  }
+
+  public void setDeletedAt(Instant deletedAt) {
+    this.deletedAt = deletedAt;
+  }
+
+  public boolean isDeleted() {
+    return deletedAt != null;
   }
 }

@@ -1,6 +1,7 @@
 package com.example.demo.exception;
 
 import com.example.demo.exception.model.AuthenticationFailedException;
+import com.example.demo.exception.model.BusinessException;
 import com.example.demo.exception.model.FileUploadException;
 import com.example.demo.exception.model.InvalidRequestException;
 import com.example.demo.exception.model.ResourceAlreadyPresent;
@@ -30,7 +31,8 @@ public class ExceptionHandling {
     TokenInvalidException.class,
     TokenExpiredException.class,
     AuthenticationFailedException.class,
-    FileUploadException.class
+    FileUploadException.class,
+    BusinessException.class
   })
   public ResponseEntity<ApiResponse> handleBadRequestExceptions(RuntimeException ex) {
     ApiResponse response = new ApiResponse(false, ex.getMessage(), ex.getClass().getSimpleName());

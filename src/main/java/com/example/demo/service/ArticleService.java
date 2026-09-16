@@ -3,6 +3,7 @@ package com.example.demo.service;
 import com.example.demo.dto.ArticleListResponseDto;
 import com.example.demo.dto.ArticleSummaryDto;
 import com.example.demo.dto.ArticlesDto;
+import com.example.demo.exception.model.BusinessException;
 import com.example.demo.exception.model.ResourceNotFound;
 import com.example.demo.mapper.ArticlesMapper;
 import com.example.demo.mapper.LocalizedTextMapper;
@@ -12,6 +13,7 @@ import com.example.demo.model.enums.ArticleType;
 import com.example.demo.model.enums.PublicationSource;
 import com.example.demo.repository.ArticlesRepository;
 import com.example.demo.repository.AuthorsRepository;
+import com.example.demo.repository.HomePageConfigRepository;
 import com.example.demo.repository.PrintIssuesRepository;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -19,6 +21,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 import java.util.regex.Pattern;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
@@ -33,16 +36,19 @@ public class ArticleService {
   private final ArticlesRepository articlesRepository;
   private final AuthorsRepository authorsRepository;
   private final PrintIssuesRepository printIssuesRepository;
+  private final HomePageConfigRepository homePageConfigRepository;
 
   public ArticleService(
       MongoTemplate mongoTemplate,
       ArticlesRepository articlesRepository,
       AuthorsRepository authorsRepository,
-      PrintIssuesRepository printIssuesRepository) {
+      PrintIssuesRepository printIssuesRepository,
+      HomePageConfigRepository homePageConfigRepository) {
     this.mongoTemplate = mongoTemplate;
     this.articlesRepository = articlesRepository;
     this.authorsRepository = authorsRepository;
     this.printIssuesRepository = printIssuesRepository;
+    this.homePageConfigRepository = homePageConfigRepository;
   }
 
   public ArticleListResponseDto getArticles(
@@ -64,6 +70,7 @@ public class ArticleService {
         "asc".equalsIgnoreCase(sortDirection) ? Sort.Direction.ASC : Sort.Direction.DESC;
 
     List<Criteria> criteriaList = new ArrayList<>();
+    criteriaList.add(Criteria.where("deletedAt").is(null));
     if (search != null && !search.isBlank()) {
       String escapedSearch = Pattern.quote(search.trim());
       criteriaList.add(
@@ -99,8 +106,6 @@ public class ArticleService {
       query.addCriteria(new Criteria().andOperator(criteriaList.toArray(new Criteria[0])));
     }
 
-    long total = mongoTemplate.count(new Query(), Articles.class);
-
     query.with(Sort.by(direction, resolvedSortBy));
     query.skip((long) (resolvedPage - 1) * resolvedPageSize);
     query.limit(resolvedPageSize);
@@ -110,7 +115,7 @@ public class ArticleService {
 
     ArticleListResponseDto response = new ArticleListResponseDto();
     response.setItems(items);
-    response.setTotal(total);
+    response.setTotal(response.getItems().size());
     response.setPage(resolvedPage);
     response.setPageSize(resolvedPageSize);
     return response;
@@ -133,17 +138,19 @@ public class ArticleService {
 
   public ArticlesDto getArticleById(String id) {
     return articlesRepository
-        .findById(id)
+        .findByIdAndNotDeleted(id)
         .map(ArticlesMapper::toDto)
         .orElseThrow(() -> new ResourceNotFound("Article not found"));
   }
 
   public ArticleSummaryDto createArticle(ArticlesDto articleDto) {
     Articles article = ArticlesMapper.toModel(articleDto);
+    article.setId(null);
     validateReferences(article);
     Instant now = Instant.now();
     article.setCreatedAt(now);
     article.setUpdatedAt(now);
+    article.setDeletedAt(null);
     if (article.getStatus() == ArticleStatus.PUBLISHED && article.getPublishedAt() == null) {
       article.setPublishedAt(now);
     }
@@ -154,13 +161,14 @@ public class ArticleService {
   public void updateArticle(String id, ArticlesDto articleDto) {
     Articles existingArticle =
         articlesRepository
-            .findById(id)
+            .findByIdAndNotDeleted(id)
             .orElseThrow(() -> new ResourceNotFound("Article not found"));
     Articles updatedArticle = ArticlesMapper.toModel(articleDto);
     updatedArticle.setId(existingArticle.getId());
     validateReferences(updatedArticle);
     updatedArticle.setCreatedAt(existingArticle.getCreatedAt());
     updatedArticle.setUpdatedAt(Instant.now());
+    updatedArticle.setDeletedAt(existingArticle.getDeletedAt());
     if (updatedArticle.getStatus() == ArticleStatus.PUBLISHED
         && updatedArticle.getPublishedAt() == null) {
       updatedArticle.setPublishedAt(
@@ -172,17 +180,33 @@ public class ArticleService {
   }
 
   public void deleteArticle(String id) {
-    Articles existingArticle =
+    Articles article =
         articlesRepository
-            .findById(id)
+            .findByIdAndNotDeleted(id)
             .orElseThrow(() -> new ResourceNotFound("Article not found"));
-    articlesRepository.delete(existingArticle);
+
+    // Check referential integrity
+    long mainArticleCount = homePageConfigRepository.countByMainArticleIdAndNotDeleted(id);
+    long featureArticleCount = homePageConfigRepository.countByFeatureArticleIdAndNotDeleted(id);
+
+    if (mainArticleCount > 0 || featureArticleCount > 0) {
+      throw new BusinessException(
+          "Cannot delete article: referenced in "
+              + mainArticleCount
+              + " main articles and "
+              + featureArticleCount
+              + " feature articles in home page config");
+    }
+
+    // Soft delete
+    article.setDeletedAt(Instant.now());
+    articlesRepository.save(article);
   }
 
   public ArticlesDto duplicateArticle(String id) {
     Articles existingArticle =
         articlesRepository
-            .findById(id)
+            .findByIdAndNotDeleted(id)
             .orElseThrow(() -> new ResourceNotFound("Article not found"));
     Articles duplicatedArticle = ArticlesMapper.toModel(ArticlesMapper.toDto(existingArticle));
     Instant now = Instant.now();
@@ -191,6 +215,7 @@ public class ArticleService {
     duplicatedArticle.setCreatedAt(now);
     duplicatedArticle.setUpdatedAt(now);
     duplicatedArticle.setPublishedAt(null);
+    duplicatedArticle.setDeletedAt(null);
     Articles savedArticle = articlesRepository.save(duplicatedArticle);
     return ArticlesMapper.toDto(savedArticle);
   }
@@ -214,15 +239,19 @@ public class ArticleService {
   }
 
   private void validateReferences(Articles article) {
+    if (StringUtils.isBlank(article.getAuthorId())
+        || StringUtils.isBlank(article.getPrintIssueId())) {
+      throw new NullPointerException("Author ID and Print Issue ID cannot be null or blank");
+    }
     if (article.getAuthorId() != null
         && !article.getAuthorId().isBlank()
-        && authorsRepository.findById(article.getAuthorId()).isEmpty()) {
-      throw new ResourceNotFound("Author not found");
+        && authorsRepository.findByIdAndNotDeleted(article.getAuthorId()).isEmpty()) {
+      throw new ResourceNotFound("Author not found or is deleted");
     }
     if (article.getPrintIssueId() != null
         && !article.getPrintIssueId().isBlank()
-        && printIssuesRepository.findById(article.getPrintIssueId()).isEmpty()) {
-      throw new ResourceNotFound("Print issue not found");
+        && printIssuesRepository.findByIdAndNotDeleted(article.getPrintIssueId()).isEmpty()) {
+      throw new ResourceNotFound("Print issue not found or is deleted");
     }
   }
 }

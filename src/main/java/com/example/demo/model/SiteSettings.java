@@ -12,6 +12,7 @@ public class SiteSettings {
   private String contactEmail;
   private String defaultShareImageUrl;
   private Instant updatedAt;
+  private Instant deletedAt;
 
   public String getId() {
     return id;
@@ -51,6 +52,18 @@ public class SiteSettings {
 
   public void setUpdatedAt(Instant updatedAt) {
     this.updatedAt = updatedAt;
+  }
+
+  public Instant getDeletedAt() {
+    return deletedAt;
+  }
+
+  public void setDeletedAt(Instant deletedAt) {
+    this.deletedAt = deletedAt;
+  }
+
+  public boolean isDeleted() {
+    return deletedAt != null;
   }
 
   public static class SiteName {

@@ -194,6 +194,7 @@ public class UserService {
     user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
     user.setCreatedAt(Instant.now());
     user.setUpdatedAt(Instant.now());
+    user.setDeletedAt(null);
     attachAuthorIdIfProvided(user, request.getAuthorId());
     user.setAuthorId(request.getAuthorId());
     Users savedUser = usersRepository.save(user);
@@ -214,6 +215,7 @@ public class UserService {
     user.setPermissions(request.getPermissions());
     user.setCreatedAt(Instant.now());
     user.setUpdatedAt(Instant.now());
+    user.setDeletedAt(null);
     attachAuthorIdIfProvided(user, request.getAuthorId());
     return UsersMapper.toDto(usersRepository.save(user));
   }
@@ -223,6 +225,7 @@ public class UserService {
     int resolvedPageSize = pageSize == null || pageSize < 1 ? 20 : pageSize;
 
     Query query = new Query();
+    query.addCriteria(Criteria.where("deletedAt").is(null));
     if (search != null && !search.isBlank()) {
       String escapedSearch = Pattern.quote(search.trim());
       query.addCriteria(
@@ -231,7 +234,6 @@ public class UserService {
                   Criteria.where("fullName").regex(escapedSearch, "i"),
                   Criteria.where("email").regex(escapedSearch, "i")));
     }
-    long total = mongoTemplate.count(new Query(), Users.class);
     query.with(Sort.by(Sort.Direction.DESC, "createdAt"));
     query.skip((long) (resolvedPage - 1) * resolvedPageSize);
     query.limit(resolvedPageSize);
@@ -239,7 +241,7 @@ public class UserService {
     UserListResponseDto response = new UserListResponseDto();
     response.setItems(
         mongoTemplate.find(query, Users.class).stream().map(UsersMapper::toDto).toList());
-    response.setTotal(total);
+    response.setTotal(response.getItems().size());
     response.setPage(resolvedPage);
     response.setPageSize(resolvedPageSize);
     return response;
@@ -248,6 +250,9 @@ public class UserService {
   public UsersDto updateUser(String id, UpdateUserRequestDto userUpdates) {
     Users user =
         usersRepository.findById(id).orElseThrow(() -> new ResourceNotFound("User not found"));
+    if (user.isDeleted()) {
+      throw new ResourceNotFound("User not found");
+    }
 
     if (userUpdates.getFullName() != null && !userUpdates.getFullName().isBlank()) {
       user.setFullName(userUpdates.getFullName());
@@ -276,6 +281,9 @@ public class UserService {
   public void suspendUser(String id) {
     Users user =
         usersRepository.findById(id).orElseThrow(() -> new ResourceNotFound("User not found"));
+    if (user.isDeleted()) {
+      throw new ResourceNotFound("User not found");
+    }
     user.setStatus(com.example.demo.model.enums.Status.SUSPENDED);
     user.setUpdatedAt(Instant.now());
     usersRepository.save(user);
@@ -284,6 +292,9 @@ public class UserService {
   public void reactivateUser(String id) {
     Users user =
         usersRepository.findById(id).orElseThrow(() -> new ResourceNotFound("User not found"));
+    if (user.isDeleted()) {
+      throw new ResourceNotFound("User not found");
+    }
     user.setStatus(com.example.demo.model.enums.Status.ACTIVE);
     user.setUpdatedAt(Instant.now());
     usersRepository.save(user);
@@ -291,8 +302,11 @@ public class UserService {
 
   public void deleteUser(String id) {
     Users user =
-        usersRepository.findById(id).orElseThrow(() -> new ResourceNotFound("User not found"));
-    usersRepository.delete(user);
+        usersRepository
+            .findByIdAndNotDeleted(id)
+            .orElseThrow(() -> new ResourceNotFound("User not found"));
+    user.setDeletedAt(Instant.now());
+    usersRepository.save(user);
   }
 
   private void attachAuthorIdIfProvided(Users user, String authorId) {
@@ -301,8 +315,8 @@ public class UserService {
     }
     Authors author =
         authorsRepository
-            .findById(authorId)
-            .orElseThrow(() -> new ResourceNotFound("Author not found"));
+            .findByIdAndNotDeleted(authorId)
+            .orElseThrow(() -> new ResourceNotFound("Author not found or is deleted"));
     user.setAuthorId(author.getId());
   }
 

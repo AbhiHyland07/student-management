@@ -18,6 +18,7 @@ public class HomePageConfig {
   private String featurePrintIssueId;
   private Boolean featurePrintIssueIsAutoLatest;
   private Instant updatedAt;
+  private Instant deletedAt;
 
   public String getId() {
     return id;
@@ -89,5 +90,17 @@ public class HomePageConfig {
 
   public void setUpdatedAt(Instant updatedAt) {
     this.updatedAt = updatedAt;
+  }
+
+  public Instant getDeletedAt() {
+    return deletedAt;
+  }
+
+  public void setDeletedAt(Instant deletedAt) {
+    this.deletedAt = deletedAt;
+  }
+
+  public boolean isDeleted() {
+    return deletedAt != null;
   }
 }
