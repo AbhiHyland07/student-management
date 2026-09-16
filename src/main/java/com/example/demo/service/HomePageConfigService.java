@@ -26,7 +26,7 @@ public class HomePageConfigService {
   }
 
   public HomePageConfigDto getHomePageConfig() {
-    return homePageConfigRepository.findAll().stream()
+    return homePageConfigRepository.findAllByDeletedAtIsNull().stream()
         .findFirst()
         .map(HomePageConfigMapper::toDto)
         .orElse(null);
@@ -34,11 +34,15 @@ public class HomePageConfigService {
 
   public HomePageConfigDto updateHomePageConfig(HomePageConfigDto homePageConfigDto) {
     HomePageConfig existingConfig =
-        homePageConfigRepository.findAll().stream().findFirst().orElse(null);
+        homePageConfigRepository.findAllByDeletedAtIsNull().stream().findFirst().orElse(null);
     HomePageConfig config = HomePageConfigMapper.toModel(homePageConfigDto);
     validateReferences(config);
     if (existingConfig != null) {
       config.setId(existingConfig.getId());
+      config.setDeletedAt(existingConfig.getDeletedAt());
+    } else {
+      config.setId(null);
+      config.setDeletedAt(null);
     }
     config.setUpdatedAt(Instant.now());
     return HomePageConfigMapper.toDto(homePageConfigRepository.save(config));
@@ -47,22 +51,22 @@ public class HomePageConfigService {
   private void validateReferences(HomePageConfig config) {
     if (config.getMainArticleId() != null
         && !config.getMainArticleId().isBlank()
-        && articlesRepository.findById(config.getMainArticleId()).isEmpty()) {
-      throw new ResourceNotFound("Main article not found");
+        && articlesRepository.findByIdAndNotDeleted(config.getMainArticleId()).isEmpty()) {
+      throw new ResourceNotFound("Main article not found or is deleted");
     }
     if (config.getFeatureArticleIds() != null) {
       for (String articleId : config.getFeatureArticleIds()) {
         if (articleId != null
             && !articleId.isBlank()
-            && articlesRepository.findById(articleId).isEmpty()) {
-          throw new ResourceNotFound("Featured article not found");
+            && articlesRepository.findByIdAndNotDeleted(articleId).isEmpty()) {
+          throw new ResourceNotFound("Featured article not found or is deleted");
         }
       }
     }
     if (config.getFeaturePrintIssueId() != null
         && !config.getFeaturePrintIssueId().isBlank()
-        && printIssuesRepository.findById(config.getFeaturePrintIssueId()).isEmpty()) {
-      throw new ResourceNotFound("Feature print issue not found");
+        && printIssuesRepository.findByIdAndNotDeleted(config.getFeaturePrintIssueId()).isEmpty()) {
+      throw new ResourceNotFound("Feature print issue not found or is deleted");
     }
   }
 }

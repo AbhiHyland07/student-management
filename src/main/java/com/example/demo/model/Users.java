@@ -38,6 +38,7 @@ public class Users {
   private Instant lastLoginAt;
   private Instant createdAt;
   private Instant updatedAt;
+  private Instant deletedAt;
 
   public String getId() {
     return id;
@@ -159,6 +160,18 @@ public class Users {
     this.updatedAt = updatedAt;
   }
 
+  public Instant getDeletedAt() {
+    return deletedAt;
+  }
+
+  public void setDeletedAt(Instant deletedAt) {
+    this.deletedAt = deletedAt;
+  }
+
+  public boolean isDeleted() {
+    return deletedAt != null;
+  }
+
   @Override
   public String toString() {
     return "Users{"
@@ -199,6 +212,8 @@ public class Users {
         + createdAt
         + ", updatedAt="
         + updatedAt
+        + ", deletedAt="
+        + deletedAt
         + '}';
   }
 }

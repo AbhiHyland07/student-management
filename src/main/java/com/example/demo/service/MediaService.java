@@ -39,11 +39,13 @@ public class MediaService {
     int resolvedPageSize = pageSize == null || pageSize < 1 ? DEFAULT_PAGE_SIZE : pageSize;
 
     Query query = new Query();
+    query.addCriteria(Criteria.where("deletedAt").is(null));
     if (kind != null && !kind.isBlank()) {
       query.addCriteria(Criteria.where("kind").is(kind));
     }
 
-    long total = mongoTemplate.count(new Query(), MediaAsset.class);
+    long total =
+        mongoTemplate.count(new Query(Criteria.where("deletedAt").is(null)), MediaAsset.class);
     query.with(Sort.by(Sort.Direction.DESC, "createdAt"));
     query.skip((long) (resolvedPage - 1) * resolvedPageSize);
     query.limit(resolvedPageSize);
@@ -77,6 +79,7 @@ public class MediaService {
       mediaAsset.setMimeType(file.getContentType());
       mediaAsset.setSizeBytes(file.getSize());
       mediaAsset.setCreatedAt(Instant.now());
+      mediaAsset.setDeletedAt(null);
 
       return MediaAssetMapper.toDto(mediaAssetRepository.save(mediaAsset));
     } catch (IOException e) {
@@ -87,9 +90,10 @@ public class MediaService {
   public void deleteMedia(String id) {
     MediaAsset mediaAsset =
         mediaAssetRepository
-            .findById(id)
+            .findByIdAndNotDeleted(id)
             .orElseThrow(() -> new ResourceNotFound("Media not found"));
-    mediaAssetRepository.delete(mediaAsset);
+    mediaAsset.setDeletedAt(Instant.now());
+    mediaAssetRepository.save(mediaAsset);
   }
 
   private String resolveKind(String contentType) {

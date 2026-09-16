@@ -25,6 +25,7 @@ public class Articles {
   private Instant createdAt;
   private Instant updatedAt;
   private Instant publishedAt;
+  private Instant deletedAt;
 
   public String getId() {
     return id;
@@ -144,5 +145,17 @@ public class Articles {
 
   public void setPublishedAt(Instant publishedAt) {
     this.publishedAt = publishedAt;
+  }
+
+  public Instant getDeletedAt() {
+    return deletedAt;
+  }
+
+  public void setDeletedAt(Instant deletedAt) {
+    this.deletedAt = deletedAt;
+  }
+
+  public boolean isDeleted() {
+    return deletedAt != null;
   }
 }

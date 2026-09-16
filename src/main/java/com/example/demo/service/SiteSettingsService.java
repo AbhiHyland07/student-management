@@ -16,7 +16,7 @@ public class SiteSettingsService {
   }
 
   public SiteSettingsDto getSettings() {
-    return siteSettingsRepository.findAll().stream()
+    return siteSettingsRepository.findAllByDeletedAtIsNull().stream()
         .findFirst()
         .map(SiteSettingsMapper::toDto)
         .orElse(null);
@@ -24,10 +24,14 @@ public class SiteSettingsService {
 
   public SiteSettingsDto updateSettings(SiteSettingsDto siteSettingsDto) {
     SiteSettings existingSettings =
-        siteSettingsRepository.findAll().stream().findFirst().orElse(null);
+        siteSettingsRepository.findAllByDeletedAtIsNull().stream().findFirst().orElse(null);
     SiteSettings siteSettings = SiteSettingsMapper.toModel(siteSettingsDto);
     if (existingSettings != null) {
       siteSettings.setId(existingSettings.getId());
+      siteSettings.setDeletedAt(existingSettings.getDeletedAt());
+    } else {
+      siteSettings.setId(null);
+      siteSettings.setDeletedAt(null);
     }
     siteSettings.setUpdatedAt(Instant.now());
     return SiteSettingsMapper.toDto(siteSettingsRepository.save(siteSettings));
