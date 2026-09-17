@@ -3,7 +3,6 @@ package com.example.demo.dto;
 import com.example.demo.model.enums.Permission;
 import com.example.demo.model.enums.PreferredLanguage;
 import com.example.demo.model.enums.Role;
-import com.example.demo.model.enums.Status;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
@@ -25,7 +24,6 @@ public class CreateUserRequestDto {
 
   private Role role;
   private String avatarUrl;
-  private Status status;
   private PreferredLanguage preferredLanguage;
   private List<Permission> permissions;
 
@@ -69,14 +67,6 @@ public class CreateUserRequestDto {
 
   public void setAvatarUrl(String avatarUrl) {
     this.avatarUrl = avatarUrl;
-  }
-
-  public Status getStatus() {
-    return status;
-  }
-
-  public void setStatus(Status status) {
-    this.status = status;
   }
 
   public PreferredLanguage getPreferredLanguage() {

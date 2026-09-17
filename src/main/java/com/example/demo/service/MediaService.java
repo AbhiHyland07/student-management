@@ -7,6 +7,7 @@ import com.example.demo.exception.model.InvalidRequestException;
 import com.example.demo.exception.model.ResourceNotFound;
 import com.example.demo.mapper.MediaAssetMapper;
 import com.example.demo.model.MediaAsset;
+import com.example.demo.model.authentication.UserExtend;
 import com.example.demo.repository.MediaAssetRepository;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -18,6 +19,8 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -44,8 +47,6 @@ public class MediaService {
       query.addCriteria(Criteria.where("kind").is(kind));
     }
 
-    long total =
-        mongoTemplate.count(new Query(Criteria.where("deletedAt").is(null)), MediaAsset.class);
     query.with(Sort.by(Sort.Direction.DESC, "createdAt"));
     query.skip((long) (resolvedPage - 1) * resolvedPageSize);
     query.limit(resolvedPageSize);
@@ -53,7 +54,7 @@ public class MediaService {
     MediaAssetListResponseDto response = new MediaAssetListResponseDto();
     response.setItems(
         mongoTemplate.find(query, MediaAsset.class).stream().map(MediaAssetMapper::toDto).toList());
-    response.setTotal(total);
+    response.setTotal(response.getItems().size());
     response.setPage(resolvedPage);
     response.setPageSize(resolvedPageSize);
     return response;
@@ -63,6 +64,14 @@ public class MediaService {
     if (file == null || file.isEmpty()) {
       throw new InvalidRequestException("File is required");
     }
+
+    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+    if (authentication == null
+        || !(authentication.getPrincipal() instanceof UserExtend userExtend)) {
+      throw new InvalidRequestException("User must be authenticated to upload media");
+    }
+
+    String currentUserId = userExtend.getUserDocument().getId();
 
     try {
       Files.createDirectories(UPLOAD_DIRECTORY);
@@ -78,6 +87,7 @@ public class MediaService {
       mediaAsset.setKind(resolveKind(file.getContentType()));
       mediaAsset.setMimeType(file.getContentType());
       mediaAsset.setSizeBytes(file.getSize());
+      mediaAsset.setUploadedBy(currentUserId);
       mediaAsset.setCreatedAt(Instant.now());
       mediaAsset.setDeletedAt(null);
 

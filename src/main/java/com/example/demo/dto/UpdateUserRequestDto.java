@@ -13,7 +13,6 @@ public class UpdateUserRequestDto {
   private Status status;
   private PreferredLanguage preferredLanguage;
   private List<Permission> permissions;
-  private String authorId;
 
   public String getFullName() {
     return fullName;
@@ -61,13 +60,5 @@ public class UpdateUserRequestDto {
 
   public void setPermissions(List<Permission> permissions) {
     this.permissions = permissions;
-  }
-
-  public String getAuthorId() {
-    return authorId;
-  }
-
-  public void setAuthorId(String authorId) {
-    this.authorId = authorId;
   }
 }

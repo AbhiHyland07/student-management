@@ -22,8 +22,10 @@ import com.example.demo.model.authentication.LogoutRequest;
 import com.example.demo.model.authentication.RefreshTokenRequest;
 import com.example.demo.model.authentication.ResetPasswordRequest;
 import com.example.demo.model.authentication.UserExtend;
+import com.example.demo.model.enums.Status;
 import com.example.demo.repository.AuthorsRepository;
 import com.example.demo.repository.UsersRepository;
+import io.micrometer.common.util.StringUtils;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.time.Instant;
@@ -187,7 +189,7 @@ public class UserService {
     user.setEmail(request.getEmail());
     user.setRole(request.getRole());
     user.setAvatarUrl(request.getAvatarUrl());
-    user.setStatus(request.getStatus());
+    user.setStatus(Status.ACTIVE);
     user.setPreferredLanguage(request.getPreferredLanguage());
     user.setPermissions(request.getPermissions());
     user.setId(UUID.randomUUID().toString());
@@ -210,7 +212,7 @@ public class UserService {
     user.setEmail(request.getEmail());
     user.setRole(request.getRole());
     user.setAvatarUrl(request.getAvatarUrl());
-    user.setStatus(com.example.demo.model.enums.Status.INVITED);
+    user.setStatus(Status.INVITED);
     user.setPreferredLanguage(request.getPreferredLanguage());
     user.setPermissions(request.getPermissions());
     user.setCreatedAt(Instant.now());
@@ -272,7 +274,6 @@ public class UserService {
     if (userUpdates.getPermissions() != null) {
       user.setPermissions(userUpdates.getPermissions());
     }
-    attachAuthorIdIfProvided(user, userUpdates.getAuthorId());
     user.setUpdatedAt(Instant.now());
     Users updatedUser = usersRepository.save(user);
     return UsersMapper.toDto(updatedUser);
@@ -284,7 +285,13 @@ public class UserService {
     if (user.isDeleted()) {
       throw new ResourceNotFound("User not found");
     }
-    user.setStatus(com.example.demo.model.enums.Status.SUSPENDED);
+    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+    if (authentication != null
+        && authentication.getPrincipal() instanceof UserExtend userExtend
+        && userExtend.getUserDocument().getId().equals(id)) {
+      throw new InvalidRequestException("You cannot suspend your own account");
+    }
+    user.setStatus(Status.SUSPENDED);
     user.setUpdatedAt(Instant.now());
     usersRepository.save(user);
   }
@@ -295,7 +302,16 @@ public class UserService {
     if (user.isDeleted()) {
       throw new ResourceNotFound("User not found");
     }
-    user.setStatus(com.example.demo.model.enums.Status.ACTIVE);
+    if (!Status.SUSPENDED.equals(user.getStatus())) {
+      throw new InvalidRequestException("User is not suspended and cannot be reactivated");
+    }
+    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+    if (authentication != null
+        && authentication.getPrincipal() instanceof UserExtend userExtend
+        && userExtend.getUserDocument().getId().equals(id)) {
+      throw new InvalidRequestException("You cannot reactivate your own account");
+    }
+    user.setStatus(Status.ACTIVE);
     user.setUpdatedAt(Instant.now());
     usersRepository.save(user);
   }
@@ -310,8 +326,8 @@ public class UserService {
   }
 
   private void attachAuthorIdIfProvided(Users user, String authorId) {
-    if (authorId == null || authorId.isBlank()) {
-      return;
+    if (StringUtils.isBlank(authorId)) {
+      throw new InvalidRequestException("Author ID is required");
     }
     Authors author =
         authorsRepository
