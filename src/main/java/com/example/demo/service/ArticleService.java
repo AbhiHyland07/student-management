@@ -151,9 +151,7 @@ public class ArticleService {
     article.setCreatedAt(now);
     article.setUpdatedAt(now);
     article.setDeletedAt(null);
-    if (article.getStatus() == ArticleStatus.PUBLISHED && article.getPublishedAt() == null) {
-      article.setPublishedAt(now);
-    }
+    article.setStatus(ArticleStatus.DRAFT);
     Articles savedArticle = articlesRepository.save(article);
     return toSummaryDto(savedArticle);
   }

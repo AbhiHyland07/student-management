@@ -22,13 +22,12 @@ public class SiteSettingsService {
         .orElse(null);
   }
 
-  public SiteSettingsDto updateSettings(SiteSettingsDto siteSettingsDto) {
+  public SiteSettingsDto upsertSettings(SiteSettingsDto siteSettingsDto) {
     SiteSettings existingSettings =
         siteSettingsRepository.findAllByDeletedAtIsNull().stream().findFirst().orElse(null);
     SiteSettings siteSettings = SiteSettingsMapper.toModel(siteSettingsDto);
     if (existingSettings != null) {
       siteSettings.setId(existingSettings.getId());
-      siteSettings.setDeletedAt(existingSettings.getDeletedAt());
     } else {
       siteSettings.setId(null);
       siteSettings.setDeletedAt(null);

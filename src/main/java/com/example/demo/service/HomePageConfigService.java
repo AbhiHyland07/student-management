@@ -39,7 +39,6 @@ public class HomePageConfigService {
     validateReferences(config);
     if (existingConfig != null) {
       config.setId(existingConfig.getId());
-      config.setDeletedAt(existingConfig.getDeletedAt());
     } else {
       config.setId(null);
       config.setDeletedAt(null);

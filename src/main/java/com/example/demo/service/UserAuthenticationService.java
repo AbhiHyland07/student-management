@@ -3,6 +3,7 @@ package com.example.demo.service;
 import com.example.demo.model.Users;
 import com.example.demo.model.authentication.UserExtend;
 import com.example.demo.model.enums.Permission;
+import com.example.demo.model.enums.Status;
 import com.example.demo.repository.UsersRepository;
 import java.util.ArrayList;
 import java.util.List;
@@ -31,6 +32,10 @@ public class UserAuthenticationService implements UserDetailsService {
             .findByEmail(email)
             .orElseThrow(
                 () -> new UsernameNotFoundException("User not found with email: " + email));
+    if (!Status.ACTIVE.equals(user.getStatus())) {
+      throw new UsernameNotFoundException(
+          "User with email: " + email + " is not active. Current status: " + user.getStatus());
+    }
     List<GrantedAuthority> authorities = new ArrayList<>();
     authorities.add(new SimpleGrantedAuthority(user.getRole().name()));
     if (user.getPermissions() != null) {

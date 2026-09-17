@@ -68,6 +68,6 @@ public class SiteSettingsController {
   @PutMapping
   public ResponseEntity<SiteSettingsDto> updateSettings(
       @Valid @RequestBody SiteSettingsDto siteSettingsDto) {
-    return ResponseEntity.ok(siteSettingsService.updateSettings(siteSettingsDto));
+    return ResponseEntity.ok(siteSettingsService.upsertSettings(siteSettingsDto));
   }
 }
