@@ -43,6 +43,7 @@ build/
 !/Dockerfile
 !/GitVersion.yml
 !/.pre-commit-config.yaml
+!/docker-compose.yml
 !/README.md
 !/mvnw
 !/mvnw.cmd
