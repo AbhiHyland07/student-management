@@ -10,6 +10,7 @@ import com.example.demo.mapper.LocalizedTextMapper;
 import com.example.demo.model.Articles;
 import com.example.demo.model.enums.ArticleStatus;
 import com.example.demo.model.enums.ArticleType;
+import com.example.demo.model.enums.Permission;
 import com.example.demo.model.enums.PublicationSource;
 import com.example.demo.repository.ArticlesRepository;
 import com.example.demo.repository.AuthorsRepository;
@@ -26,6 +27,8 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -37,6 +40,7 @@ public class ArticleService {
   private final AuthorsRepository authorsRepository;
   private final PrintIssuesRepository printIssuesRepository;
   private final HomePageConfigRepository homePageConfigRepository;
+  private final Authentication authentication;
 
   public ArticleService(
       MongoTemplate mongoTemplate,
@@ -49,6 +53,7 @@ public class ArticleService {
     this.authorsRepository = authorsRepository;
     this.printIssuesRepository = printIssuesRepository;
     this.homePageConfigRepository = homePageConfigRepository;
+    authentication = SecurityContextHolder.getContext().getAuthentication();
   }
 
   public ArticleListResponseDto getArticles(
@@ -163,16 +168,19 @@ public class ArticleService {
             .orElseThrow(() -> new ResourceNotFound("Article not found"));
     Articles updatedArticle = ArticlesMapper.toModel(articleDto);
     updatedArticle.setId(existingArticle.getId());
-    validateReferences(updatedArticle);
+    updatedArticle.setAuthorId(existingArticle.getAuthorId());
     updatedArticle.setCreatedAt(existingArticle.getCreatedAt());
     updatedArticle.setUpdatedAt(Instant.now());
     updatedArticle.setDeletedAt(existingArticle.getDeletedAt());
     if (updatedArticle.getStatus() == ArticleStatus.PUBLISHED
-        && updatedArticle.getPublishedAt() == null) {
+        && authentication.getAuthorities().stream()
+            .anyMatch(auth -> auth.getAuthority().equals(Permission.ARTICLE_PUBLISH.getValue()))) {
       updatedArticle.setPublishedAt(
           existingArticle.getPublishedAt() != null
               ? existingArticle.getPublishedAt()
               : Instant.now());
+    } else {
+      throw new BusinessException("User does not have permission to publish articles");
     }
     articlesRepository.save(updatedArticle);
   }
