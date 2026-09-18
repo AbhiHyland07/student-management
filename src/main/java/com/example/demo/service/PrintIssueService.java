@@ -67,6 +67,9 @@ public class PrintIssueService {
     printIssue.setCreatedAt(now);
     printIssue.setUpdatedAt(now);
     printIssue.setDeletedAt(null);
+    if (Boolean.TRUE.equals(printIssue.getIsPublished())) {
+      printIssue.setPublicationDate(now);
+    }
     return PrintIssuesMapper.toDto(printIssuesRepository.save(printIssue));
   }
 
@@ -76,6 +79,14 @@ public class PrintIssueService {
             .findByIdAndNotDeleted(id)
             .orElseThrow(() -> new ResourceNotFound("Print issue not found"));
     PrintIssues updatedPrintIssue = PrintIssuesMapper.toModel(printIssuesDto);
+    if (Boolean.TRUE.equals(updatedPrintIssue.getIsPublished())
+        && existingPrintIssue.getPublicationDate() == null) {
+      updatedPrintIssue.setPublicationDate(Instant.now());
+    } else if (Boolean.FALSE.equals(updatedPrintIssue.getIsPublished())) {
+      updatedPrintIssue.setPublicationDate(null);
+    } else {
+      updatedPrintIssue.setPublicationDate(existingPrintIssue.getPublicationDate());
+    }
     updatedPrintIssue.setId(existingPrintIssue.getId());
     updatedPrintIssue.setCreatedAt(existingPrintIssue.getCreatedAt());
     updatedPrintIssue.setUpdatedAt(Instant.now());
